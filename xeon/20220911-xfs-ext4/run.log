@@ -1,0 +1,845 @@
++ set -e
++ LOG_DIR=20220911-xfs-ext4
++ JOBS=8
++ CLIENTS=32
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 0
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220911-xfs-ext4/0/xfs
++ '[' -d 20220911-xfs-ext4/0/xfs ']'
++ mkdir -p 20220911-xfs-ext4/0/xfs
++ CSV='0;default;xfs'
++ echo '===== default 0 xfs ====='
+===== default 0 xfs =====
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f /dev/nvme0n1p1
+meta-data=/dev/nvme0n1p1         isize=512    agcount=4, agsize=58605718 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=234422870, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=114464, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/nvme0n1p1 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-xfs-ext4/0/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ cat /proc/mdstat
++ for scale in 100 1000 10000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-xfs-ext4/0/xfs/100
+++ date +%s
++ t1=1662880078
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662880078.171497
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 100 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662880078.171497'
++ d=14.833982
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=1288067184
+++ date +%s
++ t2=1662880093
++ echo '1662880078;1662880093;0;default;xfs;100;init;14.833982;1288067184'
+++ date +%s
++ t1=1662880093
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662880093.015108
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/4E4E6918
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662880093.015108'
++ d=0.034353
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/4E4E6918'\'')'
++ w=63208
+++ date +%s
++ t2=1662880093
++ echo '1662880093;1662880093;0;default;xfs;100;vacuum;0.034353;63208'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 100 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/xfs/100/run-ro-1
+++ date +%s
++ t1=1662880093
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=1343479808
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=1575613243
++ echo 'before;1343479808;224698368;1575613243'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-xfs-ext4/0/xfs/100/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662880093.085555
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/4E4F6000
++ pgbench -n -M prepared -S -j 8 -c 32 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/xfs/100/run-ro-1/pgbench_log.tgz pgbench_log.24168 pgbench_log.24168.1 pgbench_log.24168.2 pgbench_log.24168.3 pgbench_log.24168.4 pgbench_log.24168.5 pgbench_log.24168.6 pgbench_log.24168.7
++ rm -f pgbench_log.24168 pgbench_log.24168.1 pgbench_log.24168.2 pgbench_log.24168.3 pgbench_log.24168.4 pgbench_log.24168.5 pgbench_log.24168.6 pgbench_log.24168.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662880093.085555'
++ d=907.598583
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/4E4F6000'\'')'
++ w=263472
+++ date +%s
++ t2=1662881000
+++ cat 20220911-xfs-ext4/0/xfs/100/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=498001.370650
++ echo '1662880093;1662881000;0;default;xfs;100;ro;498001.370650;907.598583;263472'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=1343479808
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=1575613243
++ echo 'after;1343479808;224698368;1575613243'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/xfs/100/run-rw-1
+++ date +%s
++ t1=1662881060
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=1343479808
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=1575613243
++ echo 'before;1343479808;224698368;1575613243'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-xfs-ext4/0/xfs/100/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662881060.795128
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/4E536690
++ pgbench -n -M prepared -N -j 8 -c 32 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/xfs/100/run-rw-1/pgbench_log.tgz pgbench_log.29725 pgbench_log.29725.1 pgbench_log.29725.2 pgbench_log.29725.3 pgbench_log.29725.4 pgbench_log.29725.5 pgbench_log.29725.6 pgbench_log.29725.7
++ rm -f pgbench_log.29725 pgbench_log.29725.1 pgbench_log.29725.2 pgbench_log.29725.3 pgbench_log.29725.4 pgbench_log.29725.5 pgbench_log.29725.6 pgbench_log.29725.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662881060.795128'
++ d=3606.720916
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/4E536690'\'')'
++ w=97006700624
+++ date +%s
++ t2=1662884667
+++ cat 20220911-xfs-ext4/0/xfs/100/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=85764.610262
++ echo '1662881060;1662884667;0;default;xfs;100;rw;85764.610262;3606.720916;97006700624'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=17533607936
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=17765765947
++ echo 'after;17533607936;224698368;17765765947'
++ sleep 60
++ for scale in 100 1000 10000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220911-xfs-ext4/0/xfs/1000
+++ date +%s
++ t1=1662884729
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662884729.196298
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=16/E49F5D10
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662884729.196298'
++ d=133.909954
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''16/E49F5D10'\'')'
++ w=12880076216
+++ date +%s
++ t2=1662884863
++ echo '1662884729;1662884863;0;default;xfs;1000;init;133.909954;12880076216'
+++ date +%s
++ t1=1662884863
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662884863.117400
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=19/E455BAC8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662884863.117400'
++ d=0.048486
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''19/E455BAC8'\'')'
++ w=181560
+++ date +%s
++ t2=1662884863
++ echo '1662884863;1662884863;0;default;xfs;1000;vacuum;0.048486;181560'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/xfs/1000/run-ro-1
+++ date +%s
++ t1=1662884863
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-xfs-ext4/0/xfs/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662884863.203377
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=19/E4588000
++ pgbench -n -M prepared -S -j 8 -c 32 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/xfs/1000/run-ro-1/pgbench_log.tgz pgbench_log.19315 pgbench_log.19315.1 pgbench_log.19315.2 pgbench_log.19315.3 pgbench_log.19315.4 pgbench_log.19315.5 pgbench_log.19315.6 pgbench_log.19315.7
++ rm -f pgbench_log.19315 pgbench_log.19315.1 pgbench_log.19315.2 pgbench_log.19315.3 pgbench_log.19315.4 pgbench_log.19315.5 pgbench_log.19315.6 pgbench_log.19315.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662884863.203377'
++ d=906.476602
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''19/E4588000'\'')'
++ w=7560
+++ date +%s
++ t2=1662885769
+++ cat 20220911-xfs-ext4/0/xfs/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=422971.090480
++ echo '1662884863;1662885769;0;default;xfs;1000;ro;422971.090480;906.476602;7560'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/xfs/1000/run-rw-1
+++ date +%s
++ t1=1662885829
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-xfs-ext4/0/xfs/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662885829.763928
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=19/E4589E38
++ pgbench -n -M prepared -N -j 8 -c 32 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/xfs/1000/run-rw-1/pgbench_log.tgz pgbench_log.24895 pgbench_log.24895.1 pgbench_log.24895.2 pgbench_log.24895.3 pgbench_log.24895.4 pgbench_log.24895.5 pgbench_log.24895.6 pgbench_log.24895.7
++ rm -f pgbench_log.24895 pgbench_log.24895.1 pgbench_log.24895.2 pgbench_log.24895.3 pgbench_log.24895.4 pgbench_log.24895.5 pgbench_log.24895.6 pgbench_log.24895.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662885829.763928'
++ d=3604.830419
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''19/E4589E38'\'')'
++ w=123173972856
+++ date +%s
++ t2=1662889434
+++ cat 20220911-xfs-ext4/0/xfs/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=58990.829914
++ echo '1662885829;1662889434;0;default;xfs;1000;rw;58990.829914;3604.830419;123173972856'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=24983142400
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=27237126971
++ echo 'after;24983142400;2246483968;27237126971'
++ sleep 60
++ for scale in 100 1000 10000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220911-xfs-ext4/0/xfs/10000
+++ date +%s
++ t1=1662889497
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662889497.396284
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=37/361924C0
++ pgbench -i -s 10000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662889497.396284'
++ d=1587.879707
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''37/361924C0'\'')'
++ w=128800286608
+++ date +%s
++ t2=1662891085
++ echo '1662889497;1662891085;0;default;xfs;10000;init;1587.879707;128800286608'
+++ date +%s
++ t1=1662891085
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662891085.287518
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=55/33318C50
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662891085.287518'
++ d=0.198147
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''55/33318C50'\'')'
++ w=5116848
+++ date +%s
++ t2=1662891085
++ echo '1662891085;1662891085;0;default;xfs;10000;vacuum;0.198147;5116848'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 10000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/xfs/10000/run-ro-1
+++ date +%s
++ t1=1662891085
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=134337085440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=156808721211
++ echo 'before;134337085440;22464135168;156808721211'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-xfs-ext4/0/xfs/10000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662891085.525230
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=55/337FA000
++ pgbench -n -M prepared -S -j 8 -c 32 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/xfs/10000/run-ro-1/pgbench_log.tgz pgbench_log.14651 pgbench_log.14651.1 pgbench_log.14651.2 pgbench_log.14651.3 pgbench_log.14651.4 pgbench_log.14651.5 pgbench_log.14651.6 pgbench_log.14651.7
++ rm -f pgbench_log.14651 pgbench_log.14651.1 pgbench_log.14651.2 pgbench_log.14651.3 pgbench_log.14651.4 pgbench_log.14651.5 pgbench_log.14651.6 pgbench_log.14651.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662891085.525230'
++ d=902.732840
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''55/337FA000'\'')'
++ w=8496
+++ date +%s
++ t2=1662891988
+++ cat 20220911-xfs-ext4/0/xfs/10000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=143470.968925
++ echo '1662891085;1662891988;0;default;xfs;10000;ro;143470.968925;902.732840;8496'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=134337085440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=156808721211
++ echo 'after;134337085440;22464135168;156808721211'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/xfs/10000/run-rw-1
+++ date +%s
++ t1=1662892048
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=134337085440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=156808721211
++ echo 'before;134337085440;22464135168;156808721211'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-xfs-ext4/0/xfs/10000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662892048.384009
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=55/337FC1E0
++ pgbench -n -M prepared -N -j 8 -c 32 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/xfs/10000/run-rw-1/pgbench_log.tgz pgbench_log.20165 pgbench_log.20165.1 pgbench_log.20165.2 pgbench_log.20165.3 pgbench_log.20165.4 pgbench_log.20165.5 pgbench_log.20165.6 pgbench_log.20165.7
++ rm -f pgbench_log.20165 pgbench_log.20165.1 pgbench_log.20165.2 pgbench_log.20165.3 pgbench_log.20165.4 pgbench_log.20165.5 pgbench_log.20165.6 pgbench_log.20165.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662892048.384009'
++ d=3602.776797
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''55/337FC1E0'\'')'
++ w=774597365176
+++ date +%s
++ t2=1662895651
+++ cat 20220911-xfs-ext4/0/xfs/10000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=30976.693164
++ echo '1662892048;1662895651;0;default;xfs;10000;rw;30976.693164;3602.776797;774597365176'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=142393729024
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=164865364795
++ echo 'after;142393729024;22464135168;164865364795'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-xfs-ext4/0/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down..... done
+server stopped
++ sudo umount /mnt/data
++ for fs in xfs ext4
++ TESTDIR=20220911-xfs-ext4/0/ext4
++ '[' -d 20220911-xfs-ext4/0/ext4 ']'
++ mkdir -p 20220911-xfs-ext4/0/ext4
++ CSV='0;default;ext4'
++ echo '===== default 0 ext4 ====='
+===== default 0 ext4 =====
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F /dev/nvme0n1p1
+mke2fs 1.46.5 (30-Dec-2021)
+Discarding device blocks:         0/234422870   524288/234422870 12058624/234422870 64487424/234422870 74448896/234422870 77070336/234422870 79167488/234422870 81264640/234422870 83361792/234422870 85983232/234422870 88080384/234422870 90701824/234422870 93847552/234422870 96993280/234422870100139008/234422870103284736/234422870107479040/234422870111149056/234422870113770496/234422870116916224/234422870119537664/234422870122683392/234422870127401984/234422870157810688/234422870229638144/234422870                   done                            
+Creating filesystem with 234422870 4k blocks and 58613760 inodes
+Filesystem UUID: 87270e0d-1d15-4ba3-a550-9c765d66509a
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
+	102400000, 214990848
+
+Allocating group tables:    0/7155         done                            
+Writing inode tables:    0/7155         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/7155         done
+
++ sleep 5
++ sudo mount -o relatime /dev/nvme0n1p1 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-xfs-ext4/0/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ cat /proc/mdstat
++ for scale in 100 1000 10000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-xfs-ext4/0/ext4/100
+++ date +%s
++ t1=1662895759
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662895759.511328
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 100 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662895759.511328'
++ d=16.071230
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=1288067296
+++ date +%s
++ t2=1662895775
++ echo '1662895759;1662895775;0;default;ext4;100;init;16.071230;1288067296'
+++ date +%s
++ t1=1662895775
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662895775.592535
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/4E4E6988
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662895775.592535'
++ d=0.032586
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/4E4E6988'\'')'
++ w=63096
+++ date +%s
++ t2=1662895775
++ echo '1662895775;1662895775;0;default;ext4;100;vacuum;0.032586;63096'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 100 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/ext4/100/run-ro-1
+++ date +%s
++ t1=1662895775
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=1343479808
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=1575613243
++ echo 'before;1343479808;224698368;1575613243'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-xfs-ext4/0/ext4/100/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662895775.660323
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/4E4F6000
++ pgbench -n -M prepared -S -j 8 -c 32 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/ext4/100/run-ro-1/pgbench_log.tgz pgbench_log.9624 pgbench_log.9624.1 pgbench_log.9624.2 pgbench_log.9624.3 pgbench_log.9624.4 pgbench_log.9624.5 pgbench_log.9624.6 pgbench_log.9624.7
++ rm -f pgbench_log.9624 pgbench_log.9624.1 pgbench_log.9624.2 pgbench_log.9624.3 pgbench_log.9624.4 pgbench_log.9624.5 pgbench_log.9624.6 pgbench_log.9624.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662895775.660323'
++ d=907.338738
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/4E4F6000'\'')'
++ w=263528
+++ date +%s
++ t2=1662896683
+++ cat 20220911-xfs-ext4/0/ext4/100/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=488456.469898
++ echo '1662895775;1662896683;0;default;ext4;100;ro;488456.469898;907.338738;263528'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=1343479808
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=1575613243
++ echo 'after;1343479808;224698368;1575613243'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/ext4/100/run-rw-1
+++ date +%s
++ t1=1662896743
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=1343479808
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=1575613243
++ echo 'before;1343479808;224698368;1575613243'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-xfs-ext4/0/ext4/100/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662896743.116972
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/4E5366C8
++ pgbench -n -M prepared -N -j 8 -c 32 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/ext4/100/run-rw-1/pgbench_log.tgz pgbench_log.15156 pgbench_log.15156.1 pgbench_log.15156.2 pgbench_log.15156.3 pgbench_log.15156.4 pgbench_log.15156.5 pgbench_log.15156.6 pgbench_log.15156.7
++ rm -f pgbench_log.15156 pgbench_log.15156.1 pgbench_log.15156.2 pgbench_log.15156.3 pgbench_log.15156.4 pgbench_log.15156.5 pgbench_log.15156.6 pgbench_log.15156.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662896743.116972'
++ d=3606.630482
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/4E5366C8'\'')'
++ w=93997118512
+++ date +%s
++ t2=1662900349
+++ cat 20220911-xfs-ext4/0/ext4/100/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=85291.301478
++ echo '1662896743;1662900349;0;default;ext4;100;rw;85291.301478;3606.630482;93997118512'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=17444085760
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=224698368
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=17676235579
++ echo 'after;17444085760;224698368;17676235579'
++ sleep 60
++ for scale in 100 1000 10000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220911-xfs-ext4/0/ext4/1000
+++ date +%s
++ t1=1662900412
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662900412.246261
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=17/8A3EA00
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662900412.246261'
++ d=135.643300
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''17/8A3EA00'\'')'
++ w=12880076232
+++ date +%s
++ t2=1662900547
++ echo '1662900412;1662900547;0;default;ext4;1000;init;135.643300;12880076232'
+++ date +%s
++ t1=1662900547
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662900547.899114
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=1A/85A47C8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662900547.899114'
++ d=0.048075
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''1A/85A47C8'\'')'
++ w=186424
+++ date +%s
++ t2=1662900547
++ echo '1662900547;1662900547;0;default;ext4;1000;vacuum;0.048075;186424'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/ext4/1000/run-ro-1
+++ date +%s
++ t1=1662900547
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-xfs-ext4/0/ext4/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662900547.983992
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=1A/85D2000
++ pgbench -n -M prepared -S -j 8 -c 32 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/ext4/1000/run-ro-1/pgbench_log.tgz pgbench_log.4775 pgbench_log.4775.1 pgbench_log.4775.2 pgbench_log.4775.3 pgbench_log.4775.4 pgbench_log.4775.5 pgbench_log.4775.6 pgbench_log.4775.7
++ rm -f pgbench_log.4775 pgbench_log.4775.1 pgbench_log.4775.2 pgbench_log.4775.3 pgbench_log.4775.4 pgbench_log.4775.5 pgbench_log.4775.6 pgbench_log.4775.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662900547.983992'
++ d=906.480155
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''1A/85D2000'\'')'
++ w=2752
+++ date +%s
++ t2=1662901454
+++ cat 20220911-xfs-ext4/0/ext4/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=425122.951916
++ echo '1662900547;1662901454;0;default;ext4;1000;ro;425122.951916;906.480155;2752'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/ext4/1000/run-rw-1
+++ date +%s
++ t1=1662901514
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-xfs-ext4/0/ext4/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662901514.551646
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=1A/85D2B70
++ pgbench -n -M prepared -N -j 8 -c 32 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/ext4/1000/run-rw-1/pgbench_log.tgz pgbench_log.10318 pgbench_log.10318.1 pgbench_log.10318.2 pgbench_log.10318.3 pgbench_log.10318.4 pgbench_log.10318.5 pgbench_log.10318.6 pgbench_log.10318.7
++ rm -f pgbench_log.10318 pgbench_log.10318.1 pgbench_log.10318.2 pgbench_log.10318.3 pgbench_log.10318.4 pgbench_log.10318.5 pgbench_log.10318.6 pgbench_log.10318.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662901514.551646'
++ d=3605.654057
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''1A/85D2B70'\'')'
++ w=122272050760
+++ date +%s
++ t2=1662905120
+++ cat 20220911-xfs-ext4/0/ext4/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=58735.623576
++ echo '1662901514;1662905120;0;default;ext4;1000;rw;58735.623576;3605.654057;122272050760'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=24932360192
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=27186344763
++ echo 'after;24932360192;2246483968;27186344763'
++ sleep 60
++ for scale in 100 1000 10000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220911-xfs-ext4/0/ext4/10000
+++ date +%s
++ t1=1662905184
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662905184.211591
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=37/1C704288
++ pgbench -i -s 10000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662905184.211591'
++ d=1631.020537
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''37/1C704288'\'')'
++ w=128800279728
+++ date +%s
++ t2=1662906815
++ echo '1662905184;1662906815;0;default;ext4;10000;init;1631.020537;128800279728'
+++ date +%s
++ t1=1662906815
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662906815.246405
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=55/19888F38
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662906815.246405'
++ d=0.197787
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''55/19888F38'\'')'
++ w=5124296
+++ date +%s
++ t2=1662906815
++ echo '1662906815;1662906815;0;default;ext4;10000;vacuum;0.197787;5124296'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 10000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/ext4/10000/run-ro-1
+++ date +%s
++ t1=1662906815
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=134337085440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=156808721211
++ echo 'before;134337085440;22464135168;156808721211'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-xfs-ext4/0/ext4/10000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662906815.484398
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=55/19D6C000
++ pgbench -n -M prepared -S -j 8 -c 32 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/ext4/10000/run-ro-1/pgbench_log.tgz pgbench_log.31376 pgbench_log.31376.1 pgbench_log.31376.2 pgbench_log.31376.3 pgbench_log.31376.4 pgbench_log.31376.5 pgbench_log.31376.6 pgbench_log.31376.7
++ rm -f pgbench_log.31376 pgbench_log.31376.1 pgbench_log.31376.2 pgbench_log.31376.3 pgbench_log.31376.4 pgbench_log.31376.5 pgbench_log.31376.6 pgbench_log.31376.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662906815.484398'
++ d=902.692235
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''55/19D6C000'\'')'
++ w=1088
+++ date +%s
++ t2=1662907718
+++ cat 20220911-xfs-ext4/0/ext4/10000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=139684.553843
++ echo '1662906815;1662907718;0;default;ext4;10000;ro;139684.553843;902.692235;1088'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=134337085440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=156808721211
++ echo 'after;134337085440;22464135168;156808721211'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-xfs-ext4/0/ext4/10000/run-rw-1
+++ date +%s
++ t1=1662907778
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=134337085440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=156808721211
++ echo 'before;134337085440;22464135168;156808721211'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-xfs-ext4/0/ext4/10000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662907778.349559
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=55/19D6C4F0
++ pgbench -n -M prepared -N -j 8 -c 32 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-xfs-ext4/0/ext4/10000/run-rw-1/pgbench_log.tgz pgbench_log.4565 pgbench_log.4565.1 pgbench_log.4565.2 pgbench_log.4565.3 pgbench_log.4565.4 pgbench_log.4565.5 pgbench_log.4565.6 pgbench_log.4565.7
++ rm -f pgbench_log.4565 pgbench_log.4565.1 pgbench_log.4565.2 pgbench_log.4565.3 pgbench_log.4565.4 pgbench_log.4565.5 pgbench_log.4565.6 pgbench_log.4565.7
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662907778.349559'
++ d=3602.620557
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''55/19D6C4F0'\'')'
++ w=764828706696
+++ date +%s
++ t2=1662911380
+++ cat 20220911-xfs-ext4/0/ext4/10000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=30495.051034
++ echo '1662907778;1662911380;0;default;ext4;10000;rw;30495.051034;3602.620557;764828706696'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=142303502336
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=22464135168
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=164775138107
++ echo 'after;142303502336;22464135168;164775138107'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-xfs-ext4/0/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down..... done
+server stopped
++ sudo umount /mnt/data
