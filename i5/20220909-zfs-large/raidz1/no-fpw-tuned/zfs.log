@@ -1,0 +1,73 @@
+NAME         PROPERTY              VALUE                  SOURCE
+zfs_raid/pg  type                  filesystem             -
+zfs_raid/pg  creation              Sat Sep 10 10:33 2022  -
+zfs_raid/pg  used                  153K                   -
+zfs_raid/pg  available             430G                   -
+zfs_raid/pg  referenced            153K                   -
+zfs_raid/pg  compressratio         1.00x                  -
+zfs_raid/pg  mounted               yes                    -
+zfs_raid/pg  quota                 none                   default
+zfs_raid/pg  reservation           none                   default
+zfs_raid/pg  recordsize            8K                     inherited from zfs_raid
+zfs_raid/pg  mountpoint            /mnt/zfs_raid/pg       default
+zfs_raid/pg  sharenfs              off                    default
+zfs_raid/pg  checksum              on                     default
+zfs_raid/pg  compression           lz4                    inherited from zfs_raid
+zfs_raid/pg  atime                 off                    inherited from zfs_raid
+zfs_raid/pg  devices               on                     default
+zfs_raid/pg  exec                  on                     default
+zfs_raid/pg  setuid                on                     default
+zfs_raid/pg  readonly              off                    default
+zfs_raid/pg  zoned                 off                    default
+zfs_raid/pg  snapdir               hidden                 default
+zfs_raid/pg  aclmode               discard                default
+zfs_raid/pg  aclinherit            restricted             default
+zfs_raid/pg  createtxg             9                      -
+zfs_raid/pg  canmount              on                     default
+zfs_raid/pg  xattr                 on                     default
+zfs_raid/pg  copies                1                      default
+zfs_raid/pg  version               5                      -
+zfs_raid/pg  utf8only              off                    -
+zfs_raid/pg  normalization         none                   -
+zfs_raid/pg  casesensitivity       sensitive              -
+zfs_raid/pg  vscan                 off                    default
+zfs_raid/pg  nbmand                off                    default
+zfs_raid/pg  sharesmb              off                    default
+zfs_raid/pg  refquota              none                   default
+zfs_raid/pg  refreservation        none                   default
+zfs_raid/pg  guid                  11030884022206853902   -
+zfs_raid/pg  primarycache          all                    default
+zfs_raid/pg  secondarycache        all                    default
+zfs_raid/pg  usedbysnapshots       0B                     -
+zfs_raid/pg  usedbydataset         153K                   -
+zfs_raid/pg  usedbychildren        0B                     -
+zfs_raid/pg  usedbyrefreservation  0B                     -
+zfs_raid/pg  logbias               latency                inherited from zfs_raid
+zfs_raid/pg  objsetid              133                    -
+zfs_raid/pg  dedup                 off                    default
+zfs_raid/pg  mlslabel              none                   default
+zfs_raid/pg  sync                  standard               default
+zfs_raid/pg  dnodesize             legacy                 default
+zfs_raid/pg  refcompressratio      1.00x                  -
+zfs_raid/pg  written               153K                   -
+zfs_raid/pg  logicalused           42K                    -
+zfs_raid/pg  logicalreferenced     42K                    -
+zfs_raid/pg  volmode               default                default
+zfs_raid/pg  filesystem_limit      none                   default
+zfs_raid/pg  snapshot_limit        none                   default
+zfs_raid/pg  filesystem_count      none                   default
+zfs_raid/pg  snapshot_count        none                   default
+zfs_raid/pg  snapdev               hidden                 default
+zfs_raid/pg  acltype               off                    default
+zfs_raid/pg  context               none                   default
+zfs_raid/pg  fscontext             none                   default
+zfs_raid/pg  defcontext            none                   default
+zfs_raid/pg  rootcontext           none                   default
+zfs_raid/pg  relatime              on                     inherited from zfs_raid
+zfs_raid/pg  redundant_metadata    most                   inherited from zfs_raid
+zfs_raid/pg  overlay               on                     default
+zfs_raid/pg  encryption            off                    default
+zfs_raid/pg  keylocation           none                   default
+zfs_raid/pg  keyformat             none                   default
+zfs_raid/pg  pbkdf2iters           0                      default
+zfs_raid/pg  special_small_blocks  0                      default
