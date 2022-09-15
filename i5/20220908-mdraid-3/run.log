@@ -1,0 +1,4013 @@
++ set -e
++ LOG_DIR=20220908
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220908/5/xfs
++ '[' -d 20220908/5/xfs ']'
++ mkdir -p 20220908/5/xfs
++ CSV='5;default;xfs'
++ echo '===== default 5 xfs ====='
+===== default 5 xfs =====
++ l=5
++ '[' 5 == 0 ']'
++ '[' 5 == 1 ']'
++ '[' 5 == 10 ']'
++ '[' 5 == 5 ']'
++ d=5
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=5 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97618176K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=80
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=5 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=7626432 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=122022720, imaxpct=25
+         =                       sunit=16     swidth=80 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=59581, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220908/5/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220908/5/xfs/50
+++ date +%s
++ t1=1662638517
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662638517.172995
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662638517.172995'
++ d=7.291534
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662638524
++ echo '1662638517;1662638524;5;default;xfs;50;init;7.291534;644061736'
+++ date +%s
++ t1=1662638524
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662638524.471943
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662638524.471943'
++ d=0.026849
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662638524
++ echo '1662638524;1662638524;5;default;xfs;50;vacuum;0.026849;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f pgbench_log.21188 pgbench_log.21188.1 pgbench_log.21188.2 pgbench_log.21188.3
++ mkdir 20220908/5/xfs/50/run-rw-1
+++ date +%s
++ t1=1662638525
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/5/xfs/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662638525.226499
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/xfs/50/run-rw-1/pgbench_log.tgz pgbench_log.28232 pgbench_log.28232.1 pgbench_log.28232.2 pgbench_log.28232.3
++ rm -f pgbench_log.28232 pgbench_log.28232.1 pgbench_log.28232.2 pgbench_log.28232.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662638525.226499'
++ d=3601.213375
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=20556217328
+++ date +%s
++ t2=1662642126
+++ cat 20220908/5/xfs/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=18825.126312
++ echo '1662638525;1662642126;5;default;xfs;50;rw;18825.126312;3601.213375;20556217328'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4240261120
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4360098619
++ echo 'after;4240261120;112386048;4360098619'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/5/xfs/250
+++ date +%s
++ t1=1662642187
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662642187.056445
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=4/F16AB350
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662642187.056445'
++ d=33.955166
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''4/F16AB350'\'')'
++ w=3220063768
+++ date +%s
++ t2=1662642221
++ echo '1662642187;1662642221;5;default;xfs;250;init;33.955166;3220063768'
+++ date +%s
++ t1=1662642221
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662642221.019098
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/B158F968
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662642221.019098'
++ d=0.031574
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/B158F968'\'')'
++ w=83608
+++ date +%s
++ t2=1662642221
++ echo '1662642221;1662642221;5;default;xfs;250;vacuum;0.031574;83608'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/xfs/250/run-ro-1
+++ date +%s
++ t1=1662642221
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/5/xfs/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662642221.081868
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/B15A4000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/xfs/250/run-ro-1/pgbench_log.tgz pgbench_log.17918 pgbench_log.17918.1 pgbench_log.17918.2 pgbench_log.17918.3
++ rm -f pgbench_log.17918 pgbench_log.17918.1 pgbench_log.17918.2 pgbench_log.17918.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662642221.081868'
++ d=901.471923
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/B15A4000'\'')'
++ w=1104
+++ date +%s
++ t2=1662643122
+++ cat 20220908/5/xfs/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=99991.751071
++ echo '1662642221;1662643122;5;default;xfs;250;ro;99991.751071;901.471923;1104'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/xfs/250/run-rw-1
+++ date +%s
++ t1=1662643182
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/5/xfs/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662643182.611142
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/B15A4500
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/xfs/250/run-rw-1/pgbench_log.tgz pgbench_log.23103 pgbench_log.23103.1 pgbench_log.23103.2 pgbench_log.23103.3
++ rm -f pgbench_log.23103 pgbench_log.23103.1 pgbench_log.23103.2 pgbench_log.23103.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662643182.611142'
++ d=3600.816389
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/B15A4500'\'')'
++ w=26320855056
+++ date +%s
++ t2=1662646783
+++ cat 20220908/5/xfs/250/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=11834.677247
++ echo '1662643182;1662646783;5;default;xfs;250;rw;11834.677247;3600.816389;26320855056'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=5697429504
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=6266581819
++ echo 'after;5697429504;561651712;6266581819'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/5/xfs/1000
+++ date +%s
++ t1=1662646844
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662646844.264064
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=B/D271CB78
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662646844.264064'
++ d=141.489030
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''B/D271CB78'\'')'
++ w=12880076232
+++ date +%s
++ t2=1662646985
++ echo '1662646844;1662646985;5;default;xfs;1000;init;141.489030;12880076232'
+++ date +%s
++ t1=1662646985
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662646985.761567
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/D2282940
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662646985.761567'
++ d=0.050809
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/D2282940'\'')'
++ w=186048
+++ date +%s
++ t2=1662646985
++ echo '1662646985;1662646985;5;default;xfs;1000;vacuum;0.050809;186048'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/xfs/1000/run-ro-1
+++ date +%s
++ t1=1662646985
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/5/xfs/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662646985.853735
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/D22B0000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/xfs/1000/run-ro-1/pgbench_log.tgz pgbench_log.12708 pgbench_log.12708.1 pgbench_log.12708.2 pgbench_log.12708.3
++ rm -f pgbench_log.12708 pgbench_log.12708.1 pgbench_log.12708.2 pgbench_log.12708.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662646985.853735'
++ d=900.869210
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/D22B0000'\'')'
++ w=3016
+++ date +%s
++ t2=1662647886
+++ cat 20220908/5/xfs/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=56499.748966
++ echo '1662646985;1662647886;5;default;xfs;1000;ro;56499.748966;900.869210;3016'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/xfs/1000/run-rw-1
+++ date +%s
++ t1=1662647946
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/5/xfs/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662647946.790500
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/D22B0C78
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/xfs/1000/run-rw-1/pgbench_log.tgz pgbench_log.18234 pgbench_log.18234.1 pgbench_log.18234.2 pgbench_log.18234.3
++ rm -f pgbench_log.18234 pgbench_log.18234.1 pgbench_log.18234.2 pgbench_log.18234.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662647946.790500'
++ d=3600.426527
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/D22B0C78'\'')'
++ w=57449131096
+++ date +%s
++ t2=1662651547
+++ cat 20220908/5/xfs/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=4957.053764
++ echo '1662647946;1662651547;5;default;xfs;1000;rw;4957.053764;3600.426527;57449131096'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=14589386752
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=16843371323
++ echo 'after;14589386752;2246483968;16843371323'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220908/5/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220908/5/ext4
++ '[' -d 20220908/5/ext4 ']'
++ mkdir -p 20220908/5/ext4
++ CSV='5;default;ext4'
++ echo '===== default 5 ext4 ====='
+===== default 5 ext4 =====
++ l=5
++ '[' 5 == 0 ']'
++ '[' 5 == 1 ']'
++ '[' 5 == 10 ']'
++ '[' 5 == 5 ']'
++ d=5
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=5 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97618176K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=80
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=80 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Creating filesystem with 122022720 4k blocks and 30507008 inodes
+Filesystem UUID: bf9b95dd-4a56-4865-8678-f10bced1d7e5
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
+	102400000
+
+Allocating group tables:    0/3724         done                            
+Writing inode tables:    0/3724         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/3724         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220908/5/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220908/5/ext4/50
+++ date +%s
++ t1=1662652116
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662652116.615673
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662652116.615673'
++ d=8.069296
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662652124
++ echo '1662652116;1662652124;5;default;ext4;50;init;8.069296;644061736'
+++ date +%s
++ t1=1662652124
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662652124.693641
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662652124.693641'
++ d=0.028186
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662652124
++ echo '1662652124;1662652124;5;default;ext4;50;vacuum;0.028186;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/ext4/50/run-rw-1
+++ date +%s
++ t1=1662652125
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/5/ext4/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662652125.540541
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/ext4/50/run-rw-1/pgbench_log.tgz pgbench_log.8542 pgbench_log.8542.1 pgbench_log.8542.2 pgbench_log.8542.3
++ rm -f pgbench_log.8542 pgbench_log.8542.1 pgbench_log.8542.2 pgbench_log.8542.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662652125.540541'
++ d=3601.191454
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=20346005992
+++ date +%s
++ t2=1662655726
+++ cat 20220908/5/ext4/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=18592.526868
++ echo '1662652125;1662655726;5;default;ext4;50;rw;18592.526868;3601.191454;20346005992'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4196573184
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4316402491
++ echo 'after;4196573184;112386048;4316402491'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/5/ext4/250
+++ date +%s
++ t1=1662655787
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662655787.453929
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=4/E4E301A8
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662655787.453929'
++ d=36.591601
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''4/E4E301A8'\'')'
++ w=3220063784
+++ date +%s
++ t2=1662655824
++ echo '1662655787;1662655824;5;default;ext4;250;init;36.591601;3220063784'
+++ date +%s
++ t1=1662655824
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662655824.053930
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/A4D147D0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662655824.053930'
++ d=0.031627
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/A4D147D0'\'')'
++ w=79920
+++ date +%s
++ t2=1662655824
++ echo '1662655824;1662655824;5;default;ext4;250;vacuum;0.031627;79920'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/ext4/250/run-ro-1
+++ date +%s
++ t1=1662655824
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/5/ext4/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662655824.116691
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/A4D28000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/ext4/250/run-ro-1/pgbench_log.tgz pgbench_log.30601 pgbench_log.30601.1 pgbench_log.30601.2 pgbench_log.30601.3
++ rm -f pgbench_log.30601 pgbench_log.30601.1 pgbench_log.30601.2 pgbench_log.30601.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662655824.116691'
++ d=901.469864
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/A4D28000'\'')'
++ w=4768
+++ date +%s
++ t2=1662656725
+++ cat 20220908/5/ext4/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=98958.659505
++ echo '1662655824;1662656725;5;default;ext4;250;ro;98958.659505;901.469864;4768'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/ext4/250/run-rw-1
+++ date +%s
++ t1=1662656785
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/5/ext4/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662656785.644686
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/A4D29350
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/ext4/250/run-rw-1/pgbench_log.tgz pgbench_log.3437 pgbench_log.3437.1 pgbench_log.3437.2 pgbench_log.3437.3
++ rm -f pgbench_log.3437 pgbench_log.3437.1 pgbench_log.3437.2 pgbench_log.3437.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662656785.644686'
++ d=3600.808873
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/A4D29350'\'')'
++ w=26142024872
+++ date +%s
++ t2=1662660386
+++ cat 20220908/5/ext4/250/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=11649.956101
++ echo '1662656785;1662660386;5;default;ext4;250;rw;11649.956101;3600.808873;26142024872'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=5662752768
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=6231905083
++ echo 'after;5662752768;561651712;6231905083'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/5/ext4/1000
+++ date +%s
++ t1=1662660447
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662660447.568799
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=B/BB410CA8
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662660447.568799'
++ d=151.853009
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''B/BB410CA8'\'')'
++ w=12880076224
+++ date +%s
++ t2=1662660599
++ echo '1662660447;1662660599;5;default;ext4;1000;init;151.853009;12880076224'
+++ date +%s
++ t1=1662660599
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662660599.430286
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/BAF76A68
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662660599.430286'
++ d=0.049963
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/BAF76A68'\'')'
++ w=185752
+++ date +%s
++ t2=1662660599
++ echo '1662660599;1662660599;5;default;ext4;1000;vacuum;0.049963;185752'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/ext4/1000/run-ro-1
+++ date +%s
++ t1=1662660599
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/5/ext4/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662660599.513843
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/BAFA4000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/ext4/1000/run-ro-1/pgbench_log.tgz pgbench_log.25438 pgbench_log.25438.1 pgbench_log.25438.2 pgbench_log.25438.3
++ rm -f pgbench_log.25438 pgbench_log.25438.1 pgbench_log.25438.2 pgbench_log.25438.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662660599.513843'
++ d=900.874535
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/BAFA4000'\'')'
++ w=3312
+++ date +%s
++ t2=1662661500
+++ cat 20220908/5/ext4/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=56619.367484
++ echo '1662660599;1662661500;5;default;ext4;1000;ro;56619.367484;900.874535;3312'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/5/ext4/1000/run-rw-1
+++ date +%s
++ t1=1662661560
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/5/ext4/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662661560.458663
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/BAFA4DA0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/5/ext4/1000/run-rw-1/pgbench_log.tgz pgbench_log.30978 pgbench_log.30978.1 pgbench_log.30978.2 pgbench_log.30978.3
++ rm -f pgbench_log.30978 pgbench_log.30978.1 pgbench_log.30978.2 pgbench_log.30978.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662661560.458663'
++ d=3600.424119
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/BAFA4DA0'\'')'
++ w=57394992656
+++ date +%s
++ t2=1662665160
+++ cat 20220908/5/ext4/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=4941.047203
++ echo '1662661560;1662665160;5;default;ext4;1000;rw;4941.047203;3600.424119;57394992656'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=14586544128
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=16840528699
++ echo 'after;14586544128;2246483968;16840528699'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220908/5/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for level in 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220908/6/xfs
++ '[' -d 20220908/6/xfs ']'
++ mkdir -p 20220908/6/xfs
++ CSV='6;default;xfs'
++ echo '===== default 6 xfs ====='
+===== default 6 xfs =====
++ l=6
++ '[' 6 == 0 ']'
++ '[' 6 == 1 ']'
++ '[' 6 == 10 ']'
++ '[' 6 == 5 ']'
++ '[' 6 == 6 ']'
++ d=4
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=6 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97618176K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=64
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=4 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=6101136 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=97618176, imaxpct=25
+         =                       sunit=16     swidth=64 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=47665, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220908/6/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220908/6/xfs/50
+++ date +%s
++ t1=1662665749
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662665749.404946
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662665749.404946'
++ d=7.605822
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662665757
++ echo '1662665749;1662665757;6;default;xfs;50;init;7.605822;644061736'
+++ date +%s
++ t1=1662665757
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662665757.019052
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662665757.019052'
++ d=0.027869
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662665757
++ echo '1662665757;1662665757;6;default;xfs;50;vacuum;0.027869;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/xfs/50/run-rw-1
+++ date +%s
++ t1=1662665758
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/6/xfs/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662665758.078384
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/xfs/50/run-rw-1/pgbench_log.tgz pgbench_log.21252 pgbench_log.21252.1 pgbench_log.21252.2 pgbench_log.21252.3
++ rm -f pgbench_log.21252 pgbench_log.21252.1 pgbench_log.21252.2 pgbench_log.21252.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662665758.078384'
++ d=3601.184463
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=20135737272
+++ date +%s
++ t2=1662669359
+++ cat 20220908/6/xfs/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=18374.267950
++ echo '1662665758;1662669359;6;default;xfs;50;rw;18374.267950;3601.184463;20135737272'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4155432960
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4275262267
++ echo 'after;4155432960;112386048;4275262267'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/6/xfs/250
+++ date +%s
++ t1=1662669419
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662669419.856034
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=4/D85A9820
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662669419.856034'
++ d=35.431906
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''4/D85A9820'\'')'
++ w=3220063728
+++ date +%s
++ t2=1662669455
++ echo '1662669419;1662669455;6;default;xfs;250;init;35.431906;3220063728'
+++ date +%s
++ t1=1662669455
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662669455.296543
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/9848DE10
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662669455.296543'
++ d=0.031122
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/9848DE10'\'')'
++ w=82416
+++ date +%s
++ t2=1662669455
++ echo '1662669455;1662669455;6;default;xfs;250;vacuum;0.031122;82416'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/xfs/250/run-ro-1
+++ date +%s
++ t1=1662669455
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/6/xfs/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662669455.359301
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/984A2000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/xfs/250/run-ro-1/pgbench_log.tgz pgbench_log.10865 pgbench_log.10865.1 pgbench_log.10865.2 pgbench_log.10865.3
++ rm -f pgbench_log.10865 pgbench_log.10865.1 pgbench_log.10865.2 pgbench_log.10865.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662669455.359301'
++ d=901.488693
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/984A2000'\'')'
++ w=2296
+++ date +%s
++ t2=1662670356
+++ cat 20220908/6/xfs/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=100688.888445
++ echo '1662669455;1662670356;6;default;xfs;250;ro;100688.888445;901.488693;2296'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/xfs/250/run-rw-1
+++ date +%s
++ t1=1662670416
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/6/xfs/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662670416.904634
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/984A29A8
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/xfs/250/run-rw-1/pgbench_log.tgz pgbench_log.16058 pgbench_log.16058.1 pgbench_log.16058.2 pgbench_log.16058.3
++ rm -f pgbench_log.16058 pgbench_log.16058.1 pgbench_log.16058.2 pgbench_log.16058.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662670416.904634'
++ d=3600.823195
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/984A29A8'\'')'
++ w=25966953736
+++ date +%s
++ t2=1662674017
+++ cat 20220908/6/xfs/250/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=11432.521236
++ echo '1662670416;1662674017;6;default;xfs;250;rw;11432.521236;3600.823195;25966953736'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=5621932032
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=6191084347
++ echo 'after;5621932032;561651712;6191084347'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/6/xfs/1000
+++ date +%s
++ t1=1662674078
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662674078.549216
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=B/A4494358
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662674078.549216'
++ d=148.948885
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''B/A4494358'\'')'
++ w=12880076168
+++ date +%s
++ t2=1662674227
++ echo '1662674078;1662674227;6;default;xfs;1000;init;148.948885;12880076168'
+++ date +%s
++ t1=1662674227
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662674227.510251
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/A3FFA0E0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662674227.510251'
++ d=0.059728
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/A3FFA0E0'\'')'
++ w=188192
+++ date +%s
++ t2=1662674227
++ echo '1662674227;1662674227;6;default;xfs;1000;vacuum;0.059728;188192'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/xfs/1000/run-ro-1
+++ date +%s
++ t1=1662674227
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/6/xfs/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662674227.611425
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/A4028000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/xfs/1000/run-ro-1/pgbench_log.tgz pgbench_log.5680 pgbench_log.5680.1 pgbench_log.5680.2 pgbench_log.5680.3
++ rm -f pgbench_log.5680 pgbench_log.5680.1 pgbench_log.5680.2 pgbench_log.5680.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662674227.611425'
++ d=900.886228
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/A4028000'\'')'
++ w=888
+++ date +%s
++ t2=1662675128
+++ cat 20220908/6/xfs/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=56834.376392
++ echo '1662674227;1662675128;6;default;xfs;1000;ro;56834.376392;900.886228;888'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/xfs/1000/run-rw-1
+++ date +%s
++ t1=1662675188
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/6/xfs/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662675188.566929
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/A4028428
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/xfs/1000/run-rw-1/pgbench_log.tgz pgbench_log.11227 pgbench_log.11227.1 pgbench_log.11227.2 pgbench_log.11227.3
++ rm -f pgbench_log.11227 pgbench_log.11227.1 pgbench_log.11227.2 pgbench_log.11227.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662675188.566929'
++ d=3600.394179
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/A4028428'\'')'
++ w=54937826872
+++ date +%s
++ t2=1662678788
+++ cat 20220908/6/xfs/1000/run-rw-1/pgbench.log
+++ awk '{print $3}'
+++ grep 'without initial'
++ tps=4118.247171
++ echo '1662675188;1662678788;6;default;xfs;1000;rw;4118.247171;3600.394179;54937826872'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=14431854592
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=16685839163
++ echo 'after;14431854592;2246483968;16685839163'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220908/6/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220908/6/ext4
++ '[' -d 20220908/6/ext4 ']'
++ mkdir -p 20220908/6/ext4
++ CSV='6;default;ext4'
++ echo '===== default 6 ext4 ====='
+===== default 6 ext4 =====
++ l=6
++ '[' 6 == 0 ']'
++ '[' 6 == 1 ']'
++ '[' 6 == 10 ']'
++ '[' 6 == 5 ']'
++ '[' 6 == 6 ']'
++ d=4
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=6 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97618176K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=64
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=64 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Creating filesystem with 97618176 4k blocks and 24412160 inodes
+Filesystem UUID: 52f7ad90-e13e-4cd7-86e2-e6f35d2ec202
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968
+
+Allocating group tables:    0/2980         done                            
+Writing inode tables:    0/2980         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/2980         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220908/6/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220908/6/ext4/50
+++ date +%s
++ t1=1662679348
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662679348.774670
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662679348.774670'
++ d=8.642277
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662679357
++ echo '1662679348;1662679357;6;default;ext4;50;init;8.642277;644061736'
+++ date +%s
++ t1=1662679357
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662679357.425384
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662679357.425384'
++ d=0.026369
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662679357
++ echo '1662679357;1662679357;6;default;ext4;50;vacuum;0.026369;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/ext4/50/run-rw-1
+++ date +%s
++ t1=1662679358
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/6/ext4/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662679358.515481
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/ext4/50/run-rw-1/pgbench_log.tgz pgbench_log.1467 pgbench_log.1467.1 pgbench_log.1467.2 pgbench_log.1467.3
++ rm -f pgbench_log.1467 pgbench_log.1467.1 pgbench_log.1467.2 pgbench_log.1467.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662679358.515481'
++ d=3601.170569
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=20006107752
+++ date +%s
++ t2=1662682959
+++ cat 20220908/6/ext4/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=18222.974184
++ echo '1662679358;1662682959;6;default;ext4;50;rw;18222.974184;3601.170569;20006107752'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4127031296
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4246868795
++ echo 'after;4127031296;112386048;4246868795'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/6/ext4/250
+++ date +%s
++ t1=1662683020
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662683020.366097
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=4/D0A0AC40
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662683020.366097'
++ d=38.134482
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''4/D0A0AC40'\'')'
++ w=3220063848
+++ date +%s
++ t2=1662683058
++ echo '1662683020;1662683058;6;default;ext4;250;init;38.134482;3220063848'
+++ date +%s
++ t1=1662683058
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662683058.509051
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/908EF2A8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662683058.509051'
++ d=0.031337
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/908EF2A8'\'')'
++ w=77144
+++ date +%s
++ t2=1662683058
++ echo '1662683058;1662683058;6;default;ext4;250;vacuum;0.031337;77144'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/ext4/250/run-ro-1
+++ date +%s
++ t1=1662683058
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/6/ext4/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662683058.572523
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/90902000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/ext4/250/run-ro-1/pgbench_log.tgz pgbench_log.23498 pgbench_log.23498.1 pgbench_log.23498.2 pgbench_log.23498.3
++ rm -f pgbench_log.23498 pgbench_log.23498.1 pgbench_log.23498.2 pgbench_log.23498.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662683058.572523'
++ d=901.489026
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/90902000'\'')'
++ w=7488
+++ date +%s
++ t2=1662683960
+++ cat 20220908/6/ext4/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=100893.094250
++ echo '1662683058;1662683960;6;default;ext4;250;ro;100893.094250;901.489026;7488'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/ext4/250/run-rw-1
+++ date +%s
++ t1=1662684020
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/6/ext4/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662684020.119971
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/90903DF0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/ext4/250/run-rw-1/pgbench_log.tgz pgbench_log.28670 pgbench_log.28670.1 pgbench_log.28670.2 pgbench_log.28670.3
++ rm -f pgbench_log.28670 pgbench_log.28670.1 pgbench_log.28670.2 pgbench_log.28670.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662684020.119971'
++ d=3600.781756
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/90903DF0'\'')'
++ w=25554477040
+++ date +%s
++ t2=1662687620
+++ cat 20220908/6/ext4/250/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=11034.777922
++ echo '1662684020;1662687620;6;default;ext4;250;rw;11034.777922;3600.781756;25554477040'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=5546688512
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=6115840827
++ echo 'after;5546688512;561651712;6115840827'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220908/6/ext4/1000
+++ date +%s
++ t1=1662687681
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662687681.998990
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=B/83F97288
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662687681.998990'
++ d=159.379026
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''B/83F97288'\'')'
++ w=12880076360
+++ date +%s
++ t2=1662687841
++ echo '1662687681;1662687841;6;default;ext4;1000;init;159.379026;12880076360'
+++ date +%s
++ t1=1662687841
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662687841.394070
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/83AFD0D0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662687841.394070'
++ d=0.058615
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/83AFD0D0'\'')'
++ w=184112
+++ date +%s
++ t2=1662687841
++ echo '1662687841;1662687841;6;default;ext4;1000;vacuum;0.058615;184112'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/ext4/1000/run-ro-1
+++ date +%s
++ t1=1662687841
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220908/6/ext4/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662687841.495302
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/83B2A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/ext4/1000/run-ro-1/pgbench_log.tgz pgbench_log.18331 pgbench_log.18331.1 pgbench_log.18331.2 pgbench_log.18331.3
++ rm -f pgbench_log.18331 pgbench_log.18331.1 pgbench_log.18331.2 pgbench_log.18331.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662687841.495302'
++ d=900.884651
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/83B2A000'\'')'
++ w=4952
+++ date +%s
++ t2=1662688742
+++ cat 20220908/6/ext4/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=56946.555635
++ echo '1662687841;1662688742;6;default;ext4;1000;ro;56946.555635;900.884651;4952'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220908/6/ext4/1000/run-rw-1
+++ date +%s
++ t1=1662688802
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220908/6/ext4/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662688802.447814
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/83B2B408
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220908/6/ext4/1000/run-rw-1/pgbench_log.tgz pgbench_log.23848 pgbench_log.23848.1 pgbench_log.23848.2 pgbench_log.23848.3
++ rm -f pgbench_log.23848 pgbench_log.23848.1 pgbench_log.23848.2 pgbench_log.23848.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662688802.447814'
++ d=3600.370730
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/83B2B408'\'')'
++ w=54950308544
+++ date +%s
++ t2=1662692402
+++ cat 20220908/6/ext4/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=4124.049601
++ echo '1662688802;1662692402;6;default;ext4;1000;rw;4124.049601;3600.370730;54950308544'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=14433075200
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=16687059771
++ echo 'after;14433075200;2246483968;16687059771'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220908/6/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
