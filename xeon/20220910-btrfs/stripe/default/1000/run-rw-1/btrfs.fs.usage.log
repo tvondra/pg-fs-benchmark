@@ -1,0 +1,48 @@
+Overall:
+    Device size:		 894.25GiB
+    Device allocated:		  76.02GiB
+    Device unallocated:		 818.23GiB
+    Device missing:		     0.00B
+    Used:			  36.43GiB
+    Free (estimated):		 844.12GiB	(min: 435.01GiB)
+    Free (statfs, df):		 844.12GiB
+    Data ratio:			      1.00
+    Metadata ratio:		      2.00
+    Global reserve:		 117.56MiB	(used: 0.00B)
+    Multiple profiles:		        no
+
+Data,single: Size:62.01GiB, Used:36.12GiB (58.24%)
+   /dev/nvme0n1p1	  62.01GiB
+
+Metadata,DUP: Size:7.00GiB, Used:162.08MiB (2.26%)
+   /dev/nvme0n1p1	  14.00GiB
+
+System,DUP: Size:8.00MiB, Used:16.00KiB (0.20%)
+   /dev/nvme0n1p1	  16.00MiB
+
+Unallocated:
+   /dev/nvme0n1p1	 818.23GiB
+Overall:
+    Device size:		 894.25GiB
+    Device allocated:		 103.02GiB
+    Device unallocated:		 791.23GiB
+    Device missing:		     0.00B
+    Used:			  80.54GiB
+    Free (estimated):		 799.48GiB	(min: 403.87GiB)
+    Free (statfs, df):		 799.48GiB
+    Data ratio:			      1.00
+    Metadata ratio:		      2.00
+    Global reserve:		 512.00MiB	(used: 0.00B)
+    Multiple profiles:		        no
+
+Data,single: Size:87.01GiB, Used:78.76GiB (90.52%)
+   /dev/nvme0n1p1	  87.01GiB
+
+Metadata,DUP: Size:8.00GiB, Used:913.69MiB (11.15%)
+   /dev/nvme0n1p1	  16.00GiB
+
+System,DUP: Size:8.00MiB, Used:16.00KiB (0.20%)
+   /dev/nvme0n1p1	  16.00MiB
+
+Unallocated:
+   /dev/nvme0n1p1	 791.23GiB
