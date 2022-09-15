@@ -1,0 +1,189 @@
++ set -e
++ LOG_DIR=20220912-btrfs-limit
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in raid0
++ for pgconf in default
++ TESTDIR=20220912-btrfs-limit/raid0/default
++ '[' -d 20220912-btrfs-limit/raid0/default ']'
++ mkdir -p 20220912-btrfs-limit/raid0/default
++ CSV='raid0;default'
++ echo '===== default raid0 ====='
+===== default raid0 =====
++ l=raid0
++ '[' raid0 == stripe ']'
++ rate=1500
++ limit=21
++ sudo mdadm --zero-superblock --force /dev/sda1
+mdadm: Unrecognised md component device - /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
+mdadm: Unrecognised md component device - /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
+mdadm: Unrecognised md component device - /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
+mdadm: Unrecognised md component device - /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
+mdadm: Unrecognised md component device - /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
+mdadm: Unrecognised md component device - /dev/sdf1
++ sudo mkfs.btrfs -f -L data -d raid0 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
++ sleep 5
++ sudo mount -o ssd,relatime /dev/disk/by-label/data /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220912-btrfs-limit/raid0/default/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220912-btrfs-limit/raid0/default/5000
+++ date +%s
++ t1=1663014569
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663014569.844726
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663014569.844726'
++ d=818.969507
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400492776
+++ date +%s
++ t2=1663015388
++ echo '1663014569;1663015388;raid0;default;5000;init;818.969507;64400492776'
+++ date +%s
++ t1=1663015388
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663015388.831952
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/199990
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663015388.831952'
++ d=0.115268
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/199990'\'')'
++ w=2623088
+++ date +%s
++ t2=1663015388
++ echo '1663015388;1663015388;raid0;default;5000;vacuum;0.115268;2623088'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220912-btrfs-limit/raid0/default/5000/run-ro-1
++ sudo btrfs filesystem show
++ sudo btrfs filesystem df /mnt/data
++ sudo btrfs filesystem usage /mnt/data
+++ date +%s
++ t1=1663015389
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220912-btrfs-limit/raid0/default/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663015389.106709
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220912-btrfs-limit/raid0/default/5000/run-ro-1/pgbench_log.tgz pgbench_log.31724 pgbench_log.31724.1 pgbench_log.31724.2 pgbench_log.31724.3
++ rm -f pgbench_log.31724 pgbench_log.31724.1 pgbench_log.31724.2 pgbench_log.31724.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663015389.106709'
++ d=900.613702
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=5544
+++ date +%s
++ t2=1663016289
+++ cat 20220912-btrfs-limit/raid0/default/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=34994.939275
++ echo '1663015389;1663016289;raid0;default;5000;ro;34994.939275;900.613702;5544'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sudo btrfs filesystem show
++ sudo btrfs filesystem df /mnt/data
++ sudo btrfs filesystem usage /mnt/data
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220912-btrfs-limit/raid0/default/5000/run-rw-1
++ sudo btrfs filesystem show
++ sudo btrfs filesystem df /mnt/data
++ sudo btrfs filesystem usage /mnt/data
+++ date +%s
++ t1=1663016349
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220912-btrfs-limit/raid0/default/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663016349.938293
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41B658
++ pgbench -n -M prepared -R 1500 -L 21 -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220912-btrfs-limit/raid0/default/5000/run-rw-1/pgbench_log.tgz pgbench_log.4849 pgbench_log.4849.1 pgbench_log.4849.2 pgbench_log.4849.3
++ rm -f pgbench_log.4849 pgbench_log.4849.1 pgbench_log.4849.2 pgbench_log.4849.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663016349.938293'
++ d=3600.204518
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41B658'\'')'
++ w=55033153480
+++ date +%s
++ t2=1663019950
+++ cat 20220912-btrfs-limit/raid0/default/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=1240.065599
++ echo '1663016349;1663019950;raid0;default;5000;rw;1240.065599;3600.204518;55033153480'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67865993216
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79105545019
++ echo 'after;67865993216;11232100352;79105545019'
++ sudo btrfs filesystem show
++ sudo btrfs filesystem df /mnt/data
++ sudo btrfs filesystem usage /mnt/data
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220912-btrfs-limit/raid0/default/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
