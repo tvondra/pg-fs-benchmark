@@ -1,0 +1,18 @@
+===== default stripe =====
+waiting for server to start.... done
+server started
+NOTICE:  database "test" does not exist, skipping
+waiting for server to shut down..... done
+server stopped
+===== no-fpw stripe =====
+waiting for server to start.... done
+server started
+NOTICE:  database "test" does not exist, skipping
+waiting for server to shut down.... done
+server stopped
+===== no-fpw-tuned stripe =====
+waiting for server to start.... done
+server started
+NOTICE:  database "test" does not exist, skipping
+waiting for server to shut down..... done
+server stopped
