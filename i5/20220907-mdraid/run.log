@@ -1,0 +1,1689 @@
++ set -e
++ LOG_DIR=20220907
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 0 1 10 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220907/0/xfs
++ '[' -d 20220907/0/xfs ']'
++ mkdir -p 20220907/0/xfs
++ CSV='0;default'
++ echo '===== default 0 ====='
+===== default 0 =====
++ l=0
++ '[' 0 == 0 ']'
++ d=6
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=96
++ sleep 5
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=6 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=32, agsize=4575856 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=146427264, imaxpct=25
+         =                       sunit=16     swidth=96 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=71497, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220907/0/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220907/0/xfs/50
+++ date +%s
++ t1=1662542430
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662542430.817693
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662542430.817693'
++ d=6.691898
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662542437
++ echo '1662542430;1662542437;0;default;50;init;6.691898;644061736'
+++ date +%s
++ t1=1662542437
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662542437.516917
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662542437.516917'
++ d=0.026372
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662542437
++ echo '1662542437;1662542437;0;default;50;vacuum;0.026372;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/xfs/50/run-rw-1
+++ date +%s
++ t1=1662542438
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/0/xfs/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662542438.156459
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/xfs/50/run-rw-1/pgbench_log.tgz pgbench_log.2975 pgbench_log.2975.1 pgbench_log.2975.2 pgbench_log.2975.3
++ rm -f pgbench_log.2975 pgbench_log.2975.1 pgbench_log.2975.2 pgbench_log.2975.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662542438.156459'
++ d=3601.270818
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=21939283512
+++ date +%s
++ t2=1662546039
+++ cat 20220907/0/xfs/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=20241.043972
++ echo '1662542438;1662546039;0;default;50;rw;20241.043972;3601.270818;21939283512'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4506681344
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4626510651
++ echo 'after;4506681344;112386048;4626510651'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220907/0/xfs/250
+++ date +%s
++ t1=1662546100
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662546100.014805
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/43DA8658
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662546100.014805'
++ d=30.517871
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/43DA8658'\'')'
++ w=3220063720
+++ date +%s
++ t2=1662546130
++ echo '1662546100;1662546130;0;default;250;init;30.517871;3220063720'
+++ date +%s
++ t1=1662546130
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662546130.540092
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/3C8CC40
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662546130.540092'
++ d=0.031269
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/3C8CC40'\'')'
++ w=78784
+++ date +%s
++ t2=1662546130
++ echo '1662546130;1662546130;0;default;250;vacuum;0.031269;78784'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/xfs/250/run-ro-1
+++ date +%s
++ t1=1662546130
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220907/0/xfs/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662546130.601286
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/3CA0000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/xfs/250/run-ro-1/pgbench_log.tgz pgbench_log.25081 pgbench_log.25081.1 pgbench_log.25081.2 pgbench_log.25081.3
++ rm -f pgbench_log.25081 pgbench_log.25081.1 pgbench_log.25081.2 pgbench_log.25081.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662546130.601286'
++ d=901.438746
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/3CA0000'\'')'
++ w=5904
+++ date +%s
++ t2=1662547032
+++ cat 20220907/0/xfs/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=97265.287207
++ echo '1662546130;1662547032;0;default;250;ro;97265.287207;901.438746;5904'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/xfs/250/run-rw-1
+++ date +%s
++ t1=1662547092
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/0/xfs/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662547092.097913
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/3CA17C0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/xfs/250/run-rw-1/pgbench_log.tgz pgbench_log.30234 pgbench_log.30234.1 pgbench_log.30234.2 pgbench_log.30234.3
++ rm -f pgbench_log.30234 pgbench_log.30234.1 pgbench_log.30234.2 pgbench_log.30234.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662547092.097913'
++ d=3601.089501
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/3CA17C0'\'')'
++ w=30654276544
+++ date +%s
++ t2=1662550693
+++ cat 20220907/0/xfs/250/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=16880.923767
++ echo '1662547092;1662550693;0;default;250;rw;16880.923767;3601.089501;30654276544'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=6648520704
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=7217673019
++ echo 'after;6648520704;561651712;7217673019'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220907/0/xfs/1000
+++ date +%s
++ t1=1662550754
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662550754.023962
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=D/272C1040
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662550754.023962'
++ d=127.336291
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''D/272C1040'\'')'
++ w=12880076096
+++ date +%s
++ t2=1662550881
++ echo '1662550754;1662550881;0;default;1000;init;127.336291;12880076096'
+++ date +%s
++ t1=1662550881
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662550881.368546
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=10/26E26D80
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662550881.368546'
++ d=0.049122
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''10/26E26D80'\'')'
++ w=184960
+++ date +%s
++ t2=1662550881
++ echo '1662550881;1662550881;0;default;1000;vacuum;0.049122;184960'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/xfs/1000/run-ro-1
+++ date +%s
++ t1=1662550881
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220907/0/xfs/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662550881.450876
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=10/26E54000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/xfs/1000/run-ro-1/pgbench_log.tgz pgbench_log.19918 pgbench_log.19918.1 pgbench_log.19918.2 pgbench_log.19918.3
++ rm -f pgbench_log.19918 pgbench_log.19918.1 pgbench_log.19918.2 pgbench_log.19918.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662550881.450876'
++ d=900.872651
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''10/26E54000'\'')'
++ w=4104
+++ date +%s
++ t2=1662551782
+++ cat 20220907/0/xfs/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=56719.938749
++ echo '1662550881;1662551782;0;default;1000;ro;56719.938749;900.872651;4104'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/xfs/1000/run-rw-1
+++ date +%s
++ t1=1662551842
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/0/xfs/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662551842.389752
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=10/26E550B8
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/xfs/1000/run-rw-1/pgbench_log.tgz pgbench_log.25463 pgbench_log.25463.1 pgbench_log.25463.2 pgbench_log.25463.3
++ rm -f pgbench_log.25463 pgbench_log.25463.1 pgbench_log.25463.2 pgbench_log.25463.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662551842.389752'
++ d=3600.588866
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''10/26E550B8'\'')'
++ w=62155730032
+++ date +%s
++ t2=1662555442
+++ cat 20220907/0/xfs/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=7649.905238
++ echo '1662551842;1662555442;0;default;1000;rw;7649.905238;3600.588866;62155730032'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=15095824384
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=17349808955
++ echo 'after;15095824384;2246483968;17349808955'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220907/0/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220907/0/ext4
++ '[' -d 20220907/0/ext4 ']'
++ mkdir -p 20220907/0/ext4
++ CSV='0;default'
++ echo '===== default 0 ====='
+===== default 0 =====
++ l=0
++ '[' 0 == 0 ']'
++ d=6
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=96
++ sleep 5
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=96 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Discarding device blocks:         0/146427264  6815744/146427264 26738688/146427264 47710208/146427264 68157440/146427264 88604672/146427264109051904/146427264128450560/146427264                   done                            
+Creating filesystem with 146427264 4k blocks and 36610048 inodes
+Filesystem UUID: ba22389d-d6c2-4a85-aa0c-d13fe7936e4a
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
+	102400000
+
+Allocating group tables:    0/4469         done                            
+Writing inode tables:    0/4469         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/4469         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220907/0/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220907/0/ext4/50
+++ date +%s
++ t1=1662555523
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662555523.858722
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662555523.858722'
++ d=7.124085
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662555530
++ echo '1662555523;1662555530;0;default;50;init;7.124085;644061736'
+++ date +%s
++ t1=1662555530
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662555530.991215
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662555530.991215'
++ d=0.027553
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662555531
++ echo '1662555530;1662555531;0;default;50;vacuum;0.027553;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/ext4/50/run-rw-1
+++ date +%s
++ t1=1662555531
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/0/ext4/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662555531.654246
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/ext4/50/run-rw-1/pgbench_log.tgz pgbench_log.15192 pgbench_log.15192.1 pgbench_log.15192.2 pgbench_log.15192.3
++ rm -f pgbench_log.15192 pgbench_log.15192.1 pgbench_log.15192.2 pgbench_log.15192.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662555531.654246'
++ d=3601.291547
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=22367339600
+++ date +%s
++ t2=1662559132
+++ cat 20220907/0/ext4/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=20776.973500
++ echo '1662555531;1662559132;0;default;50;rw;20776.973500;3601.291547;22367339600'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4608221184
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4728050491
++ echo 'after;4608221184;112386048;4728050491'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220907/0/ext4/250
+++ date +%s
++ t1=1662559193
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662559193.587259
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/5D5E23E8
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662559193.587259'
++ d=32.788851
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/5D5E23E8'\'')'
++ w=3220063712
+++ date +%s
++ t2=1662559226
++ echo '1662559193;1662559226;0;default;250;init;32.788851;3220063712'
+++ date +%s
++ t1=1662559226
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662559226.384277
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/1D4C69C8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662559226.384277'
++ d=0.032068
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/1D4C69C8'\'')'
++ w=79416
+++ date +%s
++ t2=1662559226
++ echo '1662559226;1662559226;0;default;250;vacuum;0.032068;79416'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/ext4/250/run-ro-1
+++ date +%s
++ t1=1662559226
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220907/0/ext4/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662559226.445695
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/1D4DA000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/ext4/250/run-ro-1/pgbench_log.tgz pgbench_log.4801 pgbench_log.4801.1 pgbench_log.4801.2 pgbench_log.4801.3
++ rm -f pgbench_log.4801 pgbench_log.4801.1 pgbench_log.4801.2 pgbench_log.4801.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662559226.445695'
++ d=901.492852
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/1D4DA000'\'')'
++ w=5272
+++ date +%s
++ t2=1662560127
+++ cat 20220907/0/ext4/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=101023.506247
++ echo '1662559226;1662560127;0;default;250;ro;101023.506247;901.492852;5272'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/ext4/250/run-rw-1
+++ date +%s
++ t1=1662560187
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/0/ext4/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662560187.994819
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/1D4DB548
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/ext4/250/run-rw-1/pgbench_log.tgz pgbench_log.10008 pgbench_log.10008.1 pgbench_log.10008.2 pgbench_log.10008.3
++ rm -f pgbench_log.10008 pgbench_log.10008.1 pgbench_log.10008.2 pgbench_log.10008.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662560187.994819'
++ d=3601.132085
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/1D4DB548'\'')'
++ w=31196126008
+++ date +%s
++ t2=1662563789
+++ cat 20220907/0/ext4/250/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=17334.574126
++ echo '1662560187;1662563789;0;default;250;rw;17334.574126;3601.132085;31196126008'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=6733602816
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=7302755131
++ echo 'after;6733602816;561651712;7302755131'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220907/0/ext4/1000
+++ date +%s
++ t1=1662563850
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662563850.161611
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=D/60FBA528
++ pgbench -i -s 1000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662563850.161611'
++ d=136.546189
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''D/60FBA528'\'')'
++ w=12880076216
+++ date +%s
++ t2=1662563986
++ echo '1662563850;1662563986;0;default;1000;init;136.546189;12880076216'
+++ date +%s
++ t1=1662563986
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662563986.716274
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=10/60B202E0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662563986.716274'
++ d=0.048898
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''10/60B202E0'\'')'
++ w=187680
+++ date +%s
++ t2=1662563986
++ echo '1662563986;1662563986;0;default;1000;vacuum;0.048898;187680'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 1000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/ext4/1000/run-ro-1
+++ date +%s
++ t1=1662563986
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220907/0/ext4/1000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662563986.798275
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=10/60B4E000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/ext4/1000/run-ro-1/pgbench_log.tgz pgbench_log.32011 pgbench_log.32011.1 pgbench_log.32011.2 pgbench_log.32011.3
++ rm -f pgbench_log.32011 pgbench_log.32011.1 pgbench_log.32011.2 pgbench_log.32011.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662563986.798275'
++ d=900.880772
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''10/60B4E000'\'')'
++ w=1384
+++ date +%s
++ t2=1662564887
+++ cat 20220907/0/ext4/1000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=57809.073738
++ echo '1662563986;1662564887;0;default;1000;ro;57809.073738;900.880772;1384'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'after;13433806848;2246483968;15687791419'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/0/ext4/1000/run-rw-1
+++ date +%s
++ t1=1662564947
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=13433806848
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=15687791419
++ echo 'before;13433806848;2246483968;15687791419'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/0/ext4/1000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662564947.749794
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=10/60B4E618
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/0/ext4/1000/run-rw-1/pgbench_log.tgz pgbench_log.5118 pgbench_log.5118.1 pgbench_log.5118.2 pgbench_log.5118.3
++ rm -f pgbench_log.5118 pgbench_log.5118.1 pgbench_log.5118.2 pgbench_log.5118.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662564947.749794'
++ d=3600.591290
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''10/60B4E618'\'')'
++ w=62250270776
+++ date +%s
++ t2=1662568548
+++ cat 20220907/0/ext4/1000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=7707.131103
++ echo '1662564947;1662568548;0;default;1000;rw;7707.131103;3600.591290;62250270776'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=15106383872
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=2246483968
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=17360368443
++ echo 'after;15106383872;2246483968;17360368443'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220907/0/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for level in 0 1 10 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220907/1/xfs
++ '[' -d 20220907/1/xfs ']'
++ mkdir -p 20220907/1/xfs
++ CSV='1;default'
++ echo '===== default 1 ====='
+===== default 1 =====
++ l=1
++ '[' 1 == 0 ']'
++ '[' 1 == 1 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=48
++ sleep 5
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=3 /dev/md0
+mkfs.xfs: Specified data stripe width 384 is not the same as the volume stripe width 768
+meta-data=/dev/md0               isize=512    agcount=32, agsize=4575856 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=146427264, imaxpct=25
+         =                       sunit=16     swidth=48 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=71497, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220907/1/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220907/1/xfs/50
+++ date +%s
++ t1=1662568628
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662568628.819668
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662568628.819668'
++ d=6.712893
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061736
+++ date +%s
++ t2=1662568635
++ echo '1662568628;1662568635;1;default;50;init;6.712893;644061736'
+++ date +%s
++ t1=1662568635
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662568635.540879
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAAD0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662568635.540879'
++ d=0.027870
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAAD0'\'')'
++ w=62768
+++ date +%s
++ t2=1662568635
++ echo '1662568635;1662568635;1;default;50;vacuum;0.027870;62768'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/1/xfs/50/run-rw-1
+++ date +%s
++ t1=1662568636
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/1/xfs/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662568636.198337
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA2A0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220907/1/xfs/50/run-rw-1/pgbench_log.tgz pgbench_log.27275 pgbench_log.27275.1 pgbench_log.27275.2 pgbench_log.27275.3
++ rm -f pgbench_log.27275 pgbench_log.27275.1 pgbench_log.27275.2 pgbench_log.27275.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662568636.198337'
++ d=3601.295610
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27ECA2A0'\'')'
++ w=22341146504
+++ date +%s
++ t2=1662572237
+++ cat 20220907/1/xfs/50/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=20664.656334
++ echo '1662568636;1662572237;1;default;50;rw;20664.656334;3601.295610;22341146504'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=4586635264
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=4706464571
++ echo 'after;4586635264;112386048;4706464571'
++ sleep 60
++ for scale in 50 250 1000
++ dropdb --if-exists test
++ createdb test
++ mkdir 20220907/1/xfs/250
+++ date +%s
++ t1=1662572298
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662572298.103754
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=5/5BCE77A0
++ pgbench -i -s 250 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662572298.103754'
++ d=30.785547
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''5/5BCE77A0'\'')'
++ w=3220063784
+++ date +%s
++ t2=1662572328
++ echo '1662572298;1662572328;1;default;250;init;30.785547;3220063784'
+++ date +%s
++ t1=1662572328
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662572328.897547
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/1BBCBDC8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662572328.897547'
++ d=0.031546
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/1BBCBDC8'\'')'
++ w=82488
+++ date +%s
++ t2=1662572328
++ echo '1662572328;1662572328;1;default;250;vacuum;0.031546;82488'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 250 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/1/xfs/250/run-ro-1
+++ date +%s
++ t1=1662572328
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220907/1/xfs/250/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662572328.959503
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/1BBE0000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220907/1/xfs/250/run-ro-1/pgbench_log.tgz pgbench_log.16880 pgbench_log.16880.1 pgbench_log.16880.2 pgbench_log.16880.3
++ rm -f pgbench_log.16880 pgbench_log.16880.1 pgbench_log.16880.2 pgbench_log.16880.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662572328.959503'
++ d=901.487897
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''6/1BBE0000'\'')'
++ w=2224
+++ date +%s
++ t2=1662573230
+++ cat 20220907/1/xfs/250/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=100944.522021
++ echo '1662572328;1662573230;1;default;250;ro;100944.522021;901.487897;2224'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'after;3358531584;561651712;3927683899'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/1/xfs/250/run-rw-1
+++ date +%s
++ t1=1662573290
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=3358531584
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=561651712
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=3927683899
++ echo 'before;3358531584;561651712;3927683899'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/1/xfs/250/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662573290.505606
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=6/1BBE0998
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
++ set -e
++ LOG_DIR=20220907
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 1 10 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220907/1/xfs
++ '[' -d 20220907/1/xfs ']'
++ mkdir -p 20220907/1/xfs
++ CSV='1;default;xfs'
++ echo '===== default 1 xfs ====='
+===== default 1 xfs =====
++ l=1
++ '[' 1 == 0 ']'
++ '[' 1 == 1 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create --verbose /dev/md0 --chunk=64K --level=1 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: chunk size ignored for this level
+mdadm: Note: this array has metadata at the start and
+    may not be suitable as a boot device.  If you plan to
+    store '/boot' on this device please ensure that
+    your boot-loader understands md/v1.x metadata, or use
+    --metadata=0.90
+mdadm: size set to 97618176K
+Continue creating array? ./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
+./collect-stats.sh: line 16: 20220907/1/xfs/250/run-rw-1/stat-database.csv: No such file or directory
+./collect-stats.sh: line 17: 20220907/1/xfs/250/run-rw-1/stat-bgwriter.csv: No such file or directory
++ set -e
++ LOG_DIR=20220907
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 1 10 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220907/1/xfs
++ '[' -d 20220907/1/xfs ']'
++ mkdir -p 20220907/1/xfs
++ CSV='1;default;xfs'
++ echo '===== default 1 xfs ====='
+===== default 1 xfs =====
++ l=1
++ '[' 1 == 0 ']'
++ '[' 1 == 1 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
+mdadm: Unrecognised md component device - /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
+mdadm: Unrecognised md component device - /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
+mdadm: Unrecognised md component device - /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
+mdadm: Unrecognised md component device - /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
+mdadm: Unrecognised md component device - /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
+mdadm: Unrecognised md component device - /dev/sdf1
++ sudo mdadm --create --force --verbose /dev/md0 --chunk=64K --level=1 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: chunk size ignored for this level
+mdadm: Note: this array has metadata at the start and
+    may not be suitable as a boot device.  If you plan to
+    store '/boot' on this device please ensure that
+    your boot-loader understands md/v1.x metadata, or use
+    --metadata=0.90
+mdadm: size set to 97618176K
+Continue creating array? + set -e
++ LOG_DIR=20220907
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 1 10 5 6
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220907/1/xfs
++ '[' -d 20220907/1/xfs ']'
++ mkdir -p 20220907/1/xfs
++ CSV='1;default;xfs'
++ echo '===== default 1 xfs ====='
+===== default 1 xfs =====
++ l=1
++ '[' 1 == 0 ']'
++ '[' 1 == 1 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
+mdadm: Unrecognised md component device - /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
+mdadm: Unrecognised md component device - /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
+mdadm: Unrecognised md component device - /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
+mdadm: Unrecognised md component device - /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
+mdadm: Unrecognised md component device - /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
+mdadm: Unrecognised md component device - /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=1 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: chunk size ignored for this level
+mdadm: Note: this array has metadata at the start and
+    may not be suitable as a boot device.  If you plan to
+    store '/boot' on this device please ensure that
+    your boot-loader understands md/v1.x metadata, or use
+    --metadata=0.90
+mdadm: size set to 97618176K
+mdadm: creation continuing despite oddities due to --run
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=48
++ sleep 5
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=3 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=1525280 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=24404480, imaxpct=25
+         =                       sunit=16     swidth=48 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=11916, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220907/1/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ for scale in 50 250 1000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220907/1/xfs/50
+++ date +%s
++ t1=1662574301
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662574301.436104
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 50 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662574301.436104'
++ d=16.391963
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=644061848
+++ date +%s
++ t2=1662574317
++ echo '1662574301;1662574317;1;default;xfs;50;init;16.391963;644061848'
+++ date +%s
++ t1=1662574317
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662574317.835811
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27EBAB40
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662574317.835811'
++ d=0.027603
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/27EBAB40'\'')'
++ w=62656
+++ date +%s
++ t2=1662574317
++ echo '1662574317;1662574317;1;default;xfs;50;vacuum;0.027603;62656'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 50 == 50 ']'
++ continue
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220907/1/xfs/50/run-rw-1
+++ date +%s
++ t1=1662574324
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=671793152
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=112386048
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=791614267
++ echo 'before;671793152;112386048;791614267'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220907/1/xfs/50/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662574324.055595
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/27ECA310
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
