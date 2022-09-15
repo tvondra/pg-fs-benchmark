@@ -1,0 +1,399 @@
++ set -e
++ LOG_DIR=20220913-mdraid-limit-2
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 0
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220913-mdraid-limit-2/0/xfs
++ '[' -d 20220913-mdraid-limit-2/0/xfs ']'
++ mkdir -p 20220913-mdraid-limit-2/0/xfs
++ CSV='0;default;xfs'
++ rate=3000
++ limit=10
++ echo '===== default 0 xfs 3000 10 ====='
+===== default 0 xfs 3000 10 =====
++ l=0
++ '[' 0 == 0 ']'
++ d=6
++ sudo mdadm --zero-superblock --force /dev/sda1
+mdadm: Unrecognised md component device - /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
+mdadm: Unrecognised md component device - /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
+mdadm: Unrecognised md component device - /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
+mdadm: Unrecognised md component device - /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
+mdadm: Unrecognised md component device - /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
+mdadm: Unrecognised md component device - /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=96
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=6 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=32, agsize=4575856 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=146427264, imaxpct=25
+         =                       sunit=16     swidth=96 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=71497, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220913-mdraid-limit-2/0/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220913-mdraid-limit-2/0/xfs/5000
+++ date +%s
++ t1=1663074913
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663074913.521690
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663074913.521690'
++ d=756.560379
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400489240
+++ date +%s
++ t2=1663075670
++ echo '1663074913;1663075670;0;default;xfs;5000;init;756.560379;64400489240'
+++ date +%s
++ t1=1663075670
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663075670.090652
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/198BC0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663075670.090652'
++ d=0.113484
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/198BC0'\'')'
++ w=2626624
+++ date +%s
++ t2=1663075670
++ echo '1663075670;1663075670;0;default;xfs;5000;vacuum;0.113484;2626624'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220913-mdraid-limit-2/0/xfs/5000/run-ro-1
+++ date +%s
++ t1=1663075670
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220913-mdraid-limit-2/0/xfs/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663075670.240691
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220913-mdraid-limit-2/0/xfs/5000/run-ro-1/pgbench_log.tgz pgbench_log.2777 pgbench_log.2777.1 pgbench_log.2777.2 pgbench_log.2777.3
++ rm -f pgbench_log.2777 pgbench_log.2777.1 pgbench_log.2777.2 pgbench_log.2777.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663075670.240691'
++ d=900.703413
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=2008
+++ date +%s
++ t2=1663076570
+++ cat 20220913-mdraid-limit-2/0/xfs/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=40741.958681
++ echo '1663075670;1663076570;0;default;xfs;5000;ro;40741.958681;900.703413;2008'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220913-mdraid-limit-2/0/xfs/5000/run-rw-1
+++ date +%s
++ t1=1663076630
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220913-mdraid-limit-2/0/xfs/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663076631.011769
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A888
++ pgbench -n -M prepared -N -R 3000 -L 10 -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220913-mdraid-limit-2/0/xfs/5000/run-rw-1/pgbench_log.tgz pgbench_log.8336 pgbench_log.8336.1 pgbench_log.8336.2 pgbench_log.8336.3
++ rm -f pgbench_log.8336 pgbench_log.8336.1 pgbench_log.8336.2 pgbench_log.8336.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663076631.011769'
++ d=3600.327086
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A888'\'')'
++ w=104245943056
+++ date +%s
++ t2=1663080231
+++ cat 20220913-mdraid-limit-2/0/xfs/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=2930.924557
++ echo '1663076630;1663080231;0;default;xfs;5000;rw;2930.924557;3600.327086;104245943056'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68523188224
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79762731835
++ echo 'after;68523188224;11232100352;79762731835'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220913-mdraid-limit-2/0/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220913-mdraid-limit-2/0/ext4
++ '[' -d 20220913-mdraid-limit-2/0/ext4 ']'
++ mkdir -p 20220913-mdraid-limit-2/0/ext4
++ CSV='0;default;ext4'
++ rate=3000
++ limit=10
++ echo '===== default 0 ext4 3000 10 ====='
+===== default 0 ext4 3000 10 =====
++ l=0
++ '[' 0 == 0 ']'
++ d=6
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=96
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=96 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Discarding device blocks:         0/146427264 18874368/146427264 39321600/146427264 58720256/146427264 79167488/146427264 98566144/146427264118489088/146427264134217728/146427264                   done                            
+Creating filesystem with 146427264 4k blocks and 36610048 inodes
+Filesystem UUID: 38596bfa-380a-4f78-aa56-f25c07d23fe8
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
+	102400000
+
+Allocating group tables:    0/4469         done                            
+Writing inode tables:    0/4469         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/4469         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220913-mdraid-limit-2/0/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220913-mdraid-limit-2/0/ext4/5000
+++ date +%s
++ t1=1663080313
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663080313.659307
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663080313.659307'
++ d=787.689822
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400489432
+++ date +%s
++ t2=1663081101
++ echo '1663080313;1663081101;0;default;ext4;5000;init;787.689822;64400489432'
+++ date +%s
++ t1=1663081101
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663081101.360671
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/198C80
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663081101.360671'
++ d=0.119208
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/198C80'\'')'
++ w=2626432
+++ date +%s
++ t2=1663081101
++ echo '1663081101;1663081101;0;default;ext4;5000;vacuum;0.119208;2626432'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220913-mdraid-limit-2/0/ext4/5000/run-ro-1
+++ date +%s
++ t1=1663081101
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220913-mdraid-limit-2/0/ext4/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663081101.510779
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220913-mdraid-limit-2/0/ext4/5000/run-ro-1/pgbench_log.tgz pgbench_log.30650 pgbench_log.30650.1 pgbench_log.30650.2 pgbench_log.30650.3
++ rm -f pgbench_log.30650 pgbench_log.30650.1 pgbench_log.30650.2 pgbench_log.30650.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663081101.510779'
++ d=900.671017
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=2200
+++ date +%s
++ t2=1663082002
+++ cat 20220913-mdraid-limit-2/0/ext4/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=40785.925009
++ echo '1663081101;1663082002;0;default;ext4;5000;ro;40785.925009;900.671017;2200'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220913-mdraid-limit-2/0/ext4/5000/run-rw-1
+++ date +%s
++ t1=1663082062
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220913-mdraid-limit-2/0/ext4/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663082062.249996
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A948
++ pgbench -n -M prepared -N -R 3000 -L 10 -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220913-mdraid-limit-2/0/ext4/5000/run-rw-1/pgbench_log.tgz pgbench_log.3807 pgbench_log.3807.1 pgbench_log.3807.2 pgbench_log.3807.3
++ rm -f pgbench_log.3807 pgbench_log.3807.1 pgbench_log.3807.2 pgbench_log.3807.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663082062.249996'
++ d=3600.321332
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A948'\'')'
++ w=104403504384
+++ date +%s
++ t2=1663085662
+++ cat 20220913-mdraid-limit-2/0/ext4/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=2937.505142
++ echo '1663082062;1663085662;0;default;ext4;5000;rw;2937.505142;3600.321332;104403504384'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68525375488
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79764927291
++ echo 'after;68525375488;11232100352;79764927291'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220913-mdraid-limit-2/0/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
