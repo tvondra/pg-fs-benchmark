@@ -1,0 +1,18 @@
+Label: 'data'  uuid: 3c7ac902-947b-4935-9bed-f2db3271b675
+	Total devices 6 FS bytes used 368.00KiB
+	devid    1 size 93.16GiB used 1.00GiB path /dev/sda1
+	devid    2 size 93.16GiB used 1.00GiB path /dev/sdb1
+	devid    3 size 93.16GiB used 1.00GiB path /dev/sdc1
+	devid    4 size 93.16GiB used 1.00GiB path /dev/sdd1
+	devid    5 size 93.16GiB used 2.01GiB path /dev/sde1
+	devid    6 size 93.16GiB used 2.01GiB path /dev/sdf1
+
+Label: 'data'  uuid: 3c7ac902-947b-4935-9bed-f2db3271b675
+	Total devices 6 FS bytes used 9.31GiB
+	devid    1 size 93.16GiB used 4.00GiB path /dev/sda1
+	devid    2 size 93.16GiB used 4.00GiB path /dev/sdb1
+	devid    3 size 93.16GiB used 4.00GiB path /dev/sdc1
+	devid    4 size 93.16GiB used 4.00GiB path /dev/sdd1
+	devid    5 size 93.16GiB used 4.01GiB path /dev/sde1
+	devid    6 size 93.16GiB used 4.01GiB path /dev/sdf1
+

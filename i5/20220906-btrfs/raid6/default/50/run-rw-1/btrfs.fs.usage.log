@@ -1,0 +1,74 @@
+Overall:
+    Device size:		 558.96GiB
+    Device allocated:		   8.02GiB
+    Device unallocated:		 550.94GiB
+    Device missing:		     0.00B
+    Used:			 672.00KiB
+    Free (estimated):		 371.29GiB	(min: 279.47GiB)
+    Free (statfs, df):		 370.62GiB
+    Data ratio:			      1.50
+    Metadata ratio:		      2.00
+    Global reserve:		   3.50MiB	(used: 0.00B)
+    Multiple profiles:		        no
+
+Data,RAID6: Size:4.00GiB, Used:0.00B (0.00%)
+   /dev/sda1	   1.00GiB
+   /dev/sdb1	   1.00GiB
+   /dev/sdc1	   1.00GiB
+   /dev/sdd1	   1.00GiB
+   /dev/sde1	   1.00GiB
+   /dev/sdf1	   1.00GiB
+
+Metadata,RAID1: Size:1.00GiB, Used:320.00KiB (0.03%)
+   /dev/sde1	   1.00GiB
+   /dev/sdf1	   1.00GiB
+
+System,RAID1: Size:8.00MiB, Used:16.00KiB (0.20%)
+   /dev/sde1	   8.00MiB
+   /dev/sdf1	   8.00MiB
+
+Unallocated:
+   /dev/sda1	  92.16GiB
+   /dev/sdb1	  92.16GiB
+   /dev/sdc1	  92.16GiB
+   /dev/sdd1	  92.16GiB
+   /dev/sde1	  91.15GiB
+   /dev/sdf1	  91.15GiB
+Overall:
+    Device size:		 558.96GiB
+    Device allocated:		  28.02GiB
+    Device unallocated:		 530.94GiB
+    Device missing:		     0.00B
+    Used:			  13.60GiB
+    Free (estimated):		 361.02GiB	(min: 272.53GiB)
+    Free (statfs, df):		 359.68GiB
+    Data ratio:			      1.50
+    Metadata ratio:		      2.00
+    Global reserve:		  54.48MiB	(used: 0.00B)
+    Multiple profiles:		        no
+
+Data,RAID6: Size:16.00GiB, Used:8.94GiB (55.88%)
+   /dev/sda1	   4.00GiB
+   /dev/sdb1	   4.00GiB
+   /dev/sdc1	   4.00GiB
+   /dev/sdd1	   4.00GiB
+   /dev/sde1	   4.00GiB
+   /dev/sdf1	   4.00GiB
+
+Metadata,RAID1: Size:2.00GiB, Used:98.50MiB (4.81%)
+   /dev/sda1	   1.00GiB
+   /dev/sdc1	   1.00GiB
+   /dev/sde1	   1.00GiB
+   /dev/sdf1	   1.00GiB
+
+System,RAID1: Size:8.00MiB, Used:16.00KiB (0.20%)
+   /dev/sde1	   8.00MiB
+   /dev/sdf1	   8.00MiB
+
+Unallocated:
+   /dev/sda1	  88.16GiB
+   /dev/sdb1	  89.16GiB
+   /dev/sdc1	  88.16GiB
+   /dev/sdd1	  89.16GiB
+   /dev/sde1	  88.15GiB
+   /dev/sdf1	  88.15GiB

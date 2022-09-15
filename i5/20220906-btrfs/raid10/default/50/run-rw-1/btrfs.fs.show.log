@@ -1,0 +1,18 @@
+Label: 'data'  uuid: 16eec5f2-0dca-40b3-b43c-ed05be56ff9a
+	Total devices 6 FS bytes used 304.00KiB
+	devid    1 size 93.16GiB used 1.00GiB path /dev/sda1
+	devid    2 size 93.16GiB used 1.00GiB path /dev/sdb1
+	devid    3 size 93.16GiB used 1.00GiB path /dev/sdc1
+	devid    4 size 93.16GiB used 1.00GiB path /dev/sdd1
+	devid    5 size 93.16GiB used 2.01GiB path /dev/sde1
+	devid    6 size 93.16GiB used 2.01GiB path /dev/sdf1
+
+Label: 'data'  uuid: 16eec5f2-0dca-40b3-b43c-ed05be56ff9a
+	Total devices 6 FS bytes used 10.91GiB
+	devid    1 size 93.16GiB used 7.00GiB path /dev/sda1
+	devid    2 size 93.16GiB used 7.00GiB path /dev/sdb1
+	devid    3 size 93.16GiB used 7.00GiB path /dev/sdc1
+	devid    4 size 93.16GiB used 7.00GiB path /dev/sdd1
+	devid    5 size 93.16GiB used 7.01GiB path /dev/sde1
+	devid    6 size 93.16GiB used 7.01GiB path /dev/sdf1
+

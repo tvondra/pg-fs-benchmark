@@ -1,0 +1,76 @@
+Overall:
+    Device size:		 558.96GiB
+    Device allocated:		  34.02GiB
+    Device unallocated:		 524.94GiB
+    Device missing:		     0.00B
+    Used:			  13.06GiB
+    Free (estimated):		 361.31GiB	(min: 273.82GiB)
+    Free (statfs, df):		 359.96GiB
+    Data ratio:			      1.50
+    Metadata ratio:		      2.00
+    Global reserve:		  57.45MiB	(used: 0.00B)
+    Multiple profiles:		        no
+
+Data,RAID6: Size:20.00GiB, Used:8.65GiB (43.27%)
+   /dev/sda1	   5.00GiB
+   /dev/sdb1	   5.00GiB
+   /dev/sdc1	   5.00GiB
+   /dev/sdd1	   5.00GiB
+   /dev/sde1	   5.00GiB
+   /dev/sdf1	   5.00GiB
+
+Metadata,RAID1: Size:2.00GiB, Used:38.06MiB (1.86%)
+   /dev/sda1	   1.00GiB
+   /dev/sdc1	   1.00GiB
+   /dev/sde1	   1.00GiB
+   /dev/sdf1	   1.00GiB
+
+System,RAID1: Size:8.00MiB, Used:16.00KiB (0.20%)
+   /dev/sde1	   8.00MiB
+   /dev/sdf1	   8.00MiB
+
+Unallocated:
+   /dev/sda1	  87.16GiB
+   /dev/sdb1	  88.16GiB
+   /dev/sdc1	  87.16GiB
+   /dev/sdd1	  88.16GiB
+   /dev/sde1	  87.15GiB
+   /dev/sdf1	  87.15GiB
+Overall:
+    Device size:		 558.96GiB
+    Device allocated:		  40.02GiB
+    Device unallocated:		 518.94GiB
+    Device missing:		     0.00B
+    Used:			  24.66GiB
+    Free (estimated):		 353.80GiB	(min: 267.31GiB)
+    Free (statfs, df):		 352.45GiB
+    Data ratio:			      1.50
+    Metadata ratio:		      2.00
+    Global reserve:		 123.47MiB	(used: 0.00B)
+    Multiple profiles:		        no
+
+Data,RAID6: Size:24.00GiB, Used:16.16GiB (67.35%)
+   /dev/sda1	   6.00GiB
+   /dev/sdb1	   6.00GiB
+   /dev/sdc1	   6.00GiB
+   /dev/sdd1	   6.00GiB
+   /dev/sde1	   6.00GiB
+   /dev/sdf1	   6.00GiB
+
+Metadata,RAID1: Size:2.00GiB, Used:212.23MiB (10.36%)
+   /dev/sda1	   1.00GiB
+   /dev/sdc1	   1.00GiB
+   /dev/sde1	   1.00GiB
+   /dev/sdf1	   1.00GiB
+
+System,RAID1: Size:8.00MiB, Used:16.00KiB (0.20%)
+   /dev/sde1	   8.00MiB
+   /dev/sdf1	   8.00MiB
+
+Unallocated:
+   /dev/sda1	  86.16GiB
+   /dev/sdb1	  87.16GiB
+   /dev/sdc1	  86.16GiB
+   /dev/sdd1	  87.16GiB
+   /dev/sde1	  86.15GiB
+   /dev/sdf1	  86.15GiB
