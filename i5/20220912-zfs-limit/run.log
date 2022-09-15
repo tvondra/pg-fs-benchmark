@@ -1,0 +1,344 @@
++ set -e
++ LOG_DIR=20220912-zfs-limit
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ DATADIR=/mnt/zfs_raid/pg/data
++ recordsize=8K
++ compression=lz4
++ atime=off
++ relatime=on
++ logbias=latency
++ redundant_metadata=most
++ for level in stripe
++ for pgconf in default no-fpw-tuned
++ TESTDIR=20220912-zfs-limit/stripe/default
++ '[' -d 20220912-zfs-limit/stripe/default ']'
++ mkdir -p 20220912-zfs-limit/stripe/default
++ CSV='stripe;default'
++ echo '===== default stripe ====='
+===== default stripe =====
++ l=stripe
++ '[' stripe == stripe ']'
++ l=
++ '[' default == default ']'
++ rate=2500
++ limit=12
++ '[' stripe == raid10 ']'
++ sudo zpool create -o ashift=12 -R /mnt zfs_raid /dev/sda /dev/sdb /dev/sdc /dev/sdd /dev/sde /dev/sdf
++ sudo zfs set recordsize=8K compression=lz4 atime=off relatime=on logbias=latency redundant_metadata=most zfs_raid
++ sudo zfs create zfs_raid/pg
++ sudo chown postgres:postgres /mnt/zfs_raid/pg
++ sudo zfs get all zfs_raid/pg
++ sudo zpool status zfs_raid
++ pg_ctl -D /mnt/zfs_raid/pg/data init
++ cp postgresql-default.conf /mnt/zfs_raid/pg/data/postgresql.conf
++ pg_ctl -D /mnt/zfs_raid/pg/data -l 20220912-zfs-limit/stripe/default/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220912-zfs-limit/stripe/default/5000
+++ date +%s
++ t1=1663002148
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663002148.799587
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663002148.799587'
++ d=1065.007559
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400490576
+++ date +%s
++ t2=1663003213
++ echo '1663002148;1663003213;stripe;default;5000;init;1065.007559;64400490576'
+++ date +%s
++ t1=1663003213
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663003213.815355
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/1990F8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663003213.815355'
++ d=0.110551
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/1990F8'\'')'
++ w=2625288
+++ date +%s
++ t2=1663003213
++ echo '1663003213;1663003213;stripe;default;5000;vacuum;0.110551;2625288'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220912-zfs-limit/stripe/default/5000/run-ro-1
++ sudo zpool status zfs_raid
+++ date +%s
++ t1=1663003213
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ grep collect-stats
+++ wc -l
+++ ps ax
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220912-zfs-limit/stripe/default/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663003213.963178
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220912-zfs-limit/stripe/default/5000/run-ro-1/pgbench_log.tgz pgbench_log.32195 pgbench_log.32195.1 pgbench_log.32195.2 pgbench_log.32195.3
++ rm -f pgbench_log.32195 pgbench_log.32195.1 pgbench_log.32195.2 pgbench_log.32195.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663003213.963178'
++ d=900.448237
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=3400
+++ date +%s
++ t2=1663004114
+++ cat 20220912-zfs-limit/stripe/default/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=22935.707574
++ echo '1663003213;1663004114;stripe;default;5000;ro;22935.707574;900.448237;3400'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sudo zpool status zfs_raid
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220912-zfs-limit/stripe/default/5000/run-rw-1
++ sudo zpool status zfs_raid
+++ date +%s
++ t1=1663004174
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220912-zfs-limit/stripe/default/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663004174.486313
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41ADF8
++ pgbench -n -M prepared -R 2500 -L 12 -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220912-zfs-limit/stripe/default/5000/run-rw-1/pgbench_log.tgz pgbench_log.18729 pgbench_log.18729.1 pgbench_log.18729.2 pgbench_log.18729.3
++ rm -f pgbench_log.18729 pgbench_log.18729.1 pgbench_log.18729.2 pgbench_log.18729.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663004174.486313'
++ d=3600.306599
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41ADF8'\'')'
++ w=84396168608
+++ date +%s
++ t2=1663007774
+++ cat 20220912-zfs-limit/stripe/default/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=2169.992296
++ echo '1663004174;1663007774;stripe;default;5000;rw;2169.992296;3600.306599;84396168608'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68257595392
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79497139003
++ echo 'after;68257595392;11232100352;79497139003'
++ sudo zpool status zfs_raid
++ sleep 60
++ pg_ctl -D /mnt/zfs_raid/pg/data -l 20220912-zfs-limit/stripe/default/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo zpool status zfs_raid
++ sudo zpool destroy zfs_raid
++ for pgconf in default no-fpw-tuned
++ TESTDIR=20220912-zfs-limit/stripe/no-fpw-tuned
++ '[' -d 20220912-zfs-limit/stripe/no-fpw-tuned ']'
++ mkdir -p 20220912-zfs-limit/stripe/no-fpw-tuned
++ CSV='stripe;no-fpw-tuned'
++ echo '===== no-fpw-tuned stripe ====='
+===== no-fpw-tuned stripe =====
++ l=stripe
++ '[' stripe == stripe ']'
++ l=
++ '[' no-fpw-tuned == default ']'
++ rate=3000
++ limit=10
++ '[' stripe == raid10 ']'
++ sudo zpool create -o ashift=12 -R /mnt zfs_raid /dev/sda /dev/sdb /dev/sdc /dev/sdd /dev/sde /dev/sdf
++ sudo zfs set recordsize=8K compression=lz4 atime=off relatime=on logbias=latency redundant_metadata=most zfs_raid
++ sudo zfs create zfs_raid/pg
++ sudo chown postgres:postgres /mnt/zfs_raid/pg
++ sudo zfs get all zfs_raid/pg
++ sudo zpool status zfs_raid
++ pg_ctl -D /mnt/zfs_raid/pg/data init
++ cp postgresql-no-fpw-tuned.conf /mnt/zfs_raid/pg/data/postgresql.conf
++ pg_ctl -D /mnt/zfs_raid/pg/data -l 20220912-zfs-limit/stripe/no-fpw-tuned/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220912-zfs-limit/stripe/no-fpw-tuned/5000
+++ date +%s
++ t1=1663007838
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663007838.350594
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/1880D38
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663007838.350594'
++ d=1020.023255
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/1880D38'\'')'
++ w=64398144368
+++ date +%s
++ t2=1663008858
++ echo '1663007838;1663008858;stripe;no-fpw-tuned;5000;init;1020.023255;64398144368'
+++ date +%s
++ t1=1663008858
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663008858.382550
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=E/FFF5C0A8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663008858.382550'
++ d=0.117199
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''E/FFF5C0A8'\'')'
++ w=728920
+++ date +%s
++ t2=1663008858
++ echo '1663008858;1663008858;stripe;no-fpw-tuned;5000;vacuum;0.117199;728920'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-ro-1
++ sudo zpool status zfs_raid
+++ date +%s
++ t1=1663008858
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1663008858.535742
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/E000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-ro-1/pgbench_log.tgz pgbench_log.29823 pgbench_log.29823.1 pgbench_log.29823.2 pgbench_log.29823.3
++ rm -f pgbench_log.29823 pgbench_log.29823.1 pgbench_log.29823.2 pgbench_log.29823.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663008858.535742'
++ d=900.434019
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/E000'\'')'
++ w=7160
+++ date +%s
++ t2=1663009758
+++ cat 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=22828.141767
++ echo '1663008858;1663009758;stripe;no-fpw-tuned;5000;ro;22828.141767;900.434019;7160'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sudo zpool status zfs_raid
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-rw-1
++ sudo zpool status zfs_raid
+++ date +%s
++ t1=1663009819
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ grep -v grep
+++ wc -l
+++ grep collect-stats
+++ ps ax
++ c=0
++ '[' 0 '!=' 0 ']'
+++ psql -t -A test -c 'select extract(epoch from now())'
++ ./collect-stats.sh 3600 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-rw-1
++ s=1663009819.597594
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/FCA8
++ pgbench -n -M prepared -R 3000 -L 10 -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-rw-1/pgbench_log.tgz pgbench_log.3877 pgbench_log.3877.1 pgbench_log.3877.2 pgbench_log.3877.3
++ rm -f pgbench_log.3877 pgbench_log.3877.1 pgbench_log.3877.2 pgbench_log.3877.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1663009819.597594'
++ d=3600.337701
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/FCA8'\'')'
++ w=3212085464
+++ date +%s
++ t2=1663013419
+++ cat 20220912-zfs-limit/stripe/no-fpw-tuned/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=2516.064114
++ echo '1663009819;1663013419;stripe;no-fpw-tuned;5000;rw;2516.064114;3600.337701;3212085464'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68383383552
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79622927163
++ echo 'after;68383383552;11232100352;79622927163'
++ sudo zpool status zfs_raid
++ sleep 60
++ pg_ctl -D /mnt/zfs_raid/pg/data -l 20220912-zfs-limit/stripe/no-fpw-tuned/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo zpool status zfs_raid
++ sudo zpool destroy zfs_raid
