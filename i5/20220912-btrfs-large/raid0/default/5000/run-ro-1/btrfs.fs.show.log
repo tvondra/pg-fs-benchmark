@@ -1,0 +1,18 @@
+Label: 'data'  uuid: cb1473ca-d43e-4dac-b8a1-acd5618be219
+	Total devices 6 FS bytes used 132.42GiB
+	devid    1 size 93.15GiB used 25.00GiB path /dev/sda1
+	devid    2 size 93.15GiB used 25.00GiB path /dev/sdb1
+	devid    3 size 93.15GiB used 25.00GiB path /dev/sdc1
+	devid    4 size 93.15GiB used 25.00GiB path /dev/sdd1
+	devid    5 size 93.15GiB used 26.01GiB path /dev/sde1
+	devid    6 size 93.15GiB used 26.01GiB path /dev/sdf1
+
+Label: 'data'  uuid: cb1473ca-d43e-4dac-b8a1-acd5618be219
+	Total devices 6 FS bytes used 124.35GiB
+	devid    1 size 93.15GiB used 24.00GiB path /dev/sda1
+	devid    2 size 93.15GiB used 24.00GiB path /dev/sdb1
+	devid    3 size 93.15GiB used 24.00GiB path /dev/sdc1
+	devid    4 size 93.15GiB used 24.00GiB path /dev/sdd1
+	devid    5 size 93.15GiB used 25.01GiB path /dev/sde1
+	devid    6 size 93.15GiB used 25.01GiB path /dev/sdf1
+

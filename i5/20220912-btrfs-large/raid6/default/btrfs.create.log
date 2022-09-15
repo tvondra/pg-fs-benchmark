@@ -1,0 +1,44 @@
+WARNING: RAID5/6 support has known problems is strongly discouraged
+	 to be used besides testing or evaluation.
+
+WARNING: metadata has lower redundancy than data!
+
+btrfs-progs v5.15.1 
+See http://btrfs.wiki.kernel.org for more information.
+
+Performing full device TRIM /dev/sda1 (93.15GiB) ...
+NOTE: several default settings have changed in version 5.15, please make sure
+      this does not affect your deployments:
+      - DUP for metadata (-m dup)
+      - enabled no-holes (-O no-holes)
+      - enabled free-space-tree (-R free-space-tree)
+
+Performing full device TRIM /dev/sdb1 (93.15GiB) ...
+Performing full device TRIM /dev/sdc1 (93.15GiB) ...
+Performing full device TRIM /dev/sdd1 (93.15GiB) ...
+Performing full device TRIM /dev/sde1 (93.15GiB) ...
+Performing full device TRIM /dev/sdf1 (93.15GiB) ...
+Label:              data
+UUID:               e067ad36-0f02-4cd7-94d9-604e8fce94d8
+Node size:          16384
+Sector size:        4096
+Filesystem size:    558.91GiB
+Block group profiles:
+  Data:             RAID6             4.00GiB
+  Metadata:         RAID1             1.00GiB
+  System:           RAID1             8.00MiB
+SSD detected:       yes
+Zoned device:       no
+Incompat features:  extref, raid56, skinny-metadata, no-holes
+Runtime features:   free-space-tree
+Checksum:           crc32c
+Number of devices:  6
+Devices:
+   ID        SIZE  PATH
+    1    93.15GiB  /dev/sda1
+    2    93.15GiB  /dev/sdb1
+    3    93.15GiB  /dev/sdc1
+    4    93.15GiB  /dev/sdd1
+    5    93.15GiB  /dev/sde1
+    6    93.15GiB  /dev/sdf1
+
