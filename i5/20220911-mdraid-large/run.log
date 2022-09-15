@@ -1,0 +1,8629 @@
++ set -e
++ LOG_DIR=20220911-mdraid-large
++ JOBS=4
++ CLIENTS=16
++ DURATION_RO=900
++ DURATION_RW=3600
++ RUNS_RO=1
++ RUNS_RW=1
++ MOUNTDIR=/mnt/data
++ DATADIR=/mnt/data/pgdata
++ for level in 0 10 5 6 1
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/0/xfs
++ '[' -d 20220911-mdraid-large/0/xfs ']'
++ mkdir -p 20220911-mdraid-large/0/xfs
++ CSV='0;default;xfs'
++ echo '===== default 0 xfs ====='
+===== default 0 xfs =====
++ l=0
++ '[' 0 == 0 ']'
++ d=6
++ sudo mdadm --zero-superblock --force /dev/sda1
+mdadm: Unrecognised md component device - /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
+mdadm: Unrecognised md component device - /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
+mdadm: Unrecognised md component device - /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
+mdadm: Unrecognised md component device - /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
+mdadm: Unrecognised md component device - /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
+mdadm: Unrecognised md component device - /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=96
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=6 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=32, agsize=4575440 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=146414080, imaxpct=25
+         =                       sunit=16     swidth=96 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=71491, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/0/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/0/xfs/5000
+++ date +%s
++ t1=1662880439
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662880439.666742
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662880439.666742'
++ d=755.302713
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400489160
+++ date +%s
++ t2=1662881194
++ echo '1662880439;1662881194;0;default;xfs;5000;init;755.302713;64400489160'
+++ date +%s
++ t1=1662881194
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662881194.977026
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/198B70
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662881194.977026'
++ d=0.108633
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/198B70'\'')'
++ w=2626704
+++ date +%s
++ t2=1662881195
++ echo '1662881194;1662881195;0;default;xfs;5000;vacuum;0.108633;2626704'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/0/xfs/5000/run-ro-1
+++ date +%s
++ t1=1662881195
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/0/xfs/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662881195.112726
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/0/xfs/5000/run-ro-1/pgbench_log.tgz pgbench_log.326 pgbench_log.326.1 pgbench_log.326.2 pgbench_log.326.3
++ rm -f pgbench_log.326 pgbench_log.326.1 pgbench_log.326.2 pgbench_log.326.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662881195.112726'
++ d=900.674917
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=1928
+++ date +%s
++ t2=1662882095
+++ cat 20220911-mdraid-large/0/xfs/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=40527.968782
++ echo '1662881195;1662882095;0;default;xfs;5000;ro;40527.968782;900.674917;1928'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/0/xfs/5000/run-rw-1
+++ date +%s
++ t1=1662882155
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/0/xfs/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662882155.854303
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A838
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/0/xfs/5000/run-rw-1/pgbench_log.tgz pgbench_log.5935 pgbench_log.5935.1 pgbench_log.5935.2 pgbench_log.5935.3
++ rm -f pgbench_log.5935 pgbench_log.5935.1 pgbench_log.5935.2 pgbench_log.5935.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662882155.854303'
++ d=3600.502411
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A838'\'')'
++ w=172493654672
+++ date +%s
++ t2=1662885756
+++ cat 20220911-mdraid-large/0/xfs/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=5890.896105
++ echo '1662882155;1662885756;0;default;xfs;5000;rw;5890.896105;3600.502411;172493654672'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=69307195392
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=80546739003
++ echo 'after;69307195392;11232100352;80546739003'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/0/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/0/ext4
++ '[' -d 20220911-mdraid-large/0/ext4 ']'
++ mkdir -p 20220911-mdraid-large/0/ext4
++ CSV='0;default;ext4'
++ echo '===== default 0 ext4 ====='
+===== default 0 ext4 =====
++ l=0
++ '[' 0 == 0 ']'
++ d=6
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=0 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=96
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=96 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Discarding device blocks:         0/146414592 17825792/146414592 38797312/146414592 59244544/146414592 79691776/146414592100663296/146414592121110528/146414592137363456/146414592                   done                            
+Creating filesystem with 146414592 4k blocks and 36610048 inodes
+Filesystem UUID: 98dc140c-ef5c-4495-92ba-ec4379a388bd
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
+	102400000
+
+Allocating group tables:    0/4469         done                            
+Writing inode tables:    0/4469         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/4469         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/0/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/0/ext4/5000
+++ date +%s
++ t1=1662885838
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662885838.454421
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662885838.454421'
++ d=785.617627
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400489648
+++ date +%s
++ t2=1662886624
++ echo '1662885838;1662886624;0;default;ext4;5000;init;785.617627;64400489648'
+++ date +%s
++ t1=1662886624
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662886624.081018
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/198D58
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662886624.081018'
++ d=0.118267
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/198D58'\'')'
++ w=2626216
+++ date +%s
++ t2=1662886624
++ echo '1662886624;1662886624;0;default;ext4;5000;vacuum;0.118267;2626216'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/0/ext4/5000/run-ro-1
+++ date +%s
++ t1=1662886624
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/0/ext4/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662886624.239014
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/0/ext4/5000/run-ro-1/pgbench_log.tgz pgbench_log.28162 pgbench_log.28162.1 pgbench_log.28162.2 pgbench_log.28162.3
++ rm -f pgbench_log.28162 pgbench_log.28162.1 pgbench_log.28162.2 pgbench_log.28162.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662886624.239014'
++ d=900.695682
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=2416
+++ date +%s
++ t2=1662887524
+++ cat 20220911-mdraid-large/0/ext4/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=40144.941174
++ echo '1662886624;1662887524;0;default;ext4;5000;ro;40144.941174;900.695682;2416'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/0/ext4/5000/run-rw-1
+++ date +%s
++ t1=1662887584
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/0/ext4/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662887585.003876
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41AA20
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/0/ext4/5000/run-rw-1/pgbench_log.tgz pgbench_log.1279 pgbench_log.1279.1 pgbench_log.1279.2 pgbench_log.1279.3
++ rm -f pgbench_log.1279 pgbench_log.1279.1 pgbench_log.1279.2 pgbench_log.1279.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662887585.003876'
++ d=3600.491377
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41AA20'\'')'
++ w=171063856512
+++ date +%s
++ t2=1662891185
+++ cat 20220911-mdraid-large/0/ext4/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=5825.994277
++ echo '1662887584;1662891185;0;default;ext4;5000;rw;5825.994277;3600.491377;171063856512'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=69292605440
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=80532157243
++ echo 'after;69292605440;11232100352;80532157243'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/0/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for level in 0 10 5 6 1
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/10/xfs
++ '[' -d 20220911-mdraid-large/10/xfs ']'
++ mkdir -p 20220911-mdraid-large/10/xfs
++ CSV='10;default;xfs'
++ echo '===== default 10 xfs ====='
+===== default 10 xfs =====
++ l=10
++ '[' 10 == 0 ']'
++ '[' 10 == 1 ']'
++ '[' 10 == 10 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=10 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to n2
+mdadm: layout defaults to n2
+mdadm: size set to 97609728K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=48
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=3 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=4575440 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=73207040, imaxpct=25
+         =                       sunit=16     swidth=48 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=35745, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/10/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/10/xfs/5000
+++ date +%s
++ t1=1662892732
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662892732.946474
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662892732.946474'
++ d=927.786817
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400490576
+++ date +%s
++ t2=1662893660
++ echo '1662892732;1662893660;10;default;xfs;5000;init;927.786817;64400490576'
+++ date +%s
++ t1=1662893660
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662893660.745433
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/1990F8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662893660.745433'
++ d=0.121665
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/1990F8'\'')'
++ w=2625288
+++ date +%s
++ t2=1662893660
++ echo '1662893660;1662893660;10;default;xfs;5000;vacuum;0.121665;2625288'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/10/xfs/5000/run-ro-1
+++ date +%s
++ t1=1662893660
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/10/xfs/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662893660.898416
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/10/xfs/5000/run-ro-1/pgbench_log.tgz pgbench_log.25129 pgbench_log.25129.1 pgbench_log.25129.2 pgbench_log.25129.3
++ rm -f pgbench_log.25129 pgbench_log.25129.1 pgbench_log.25129.2 pgbench_log.25129.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662893660.898416'
++ d=900.697752
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=3344
+++ date +%s
++ t2=1662894561
+++ cat 20220911-mdraid-large/10/xfs/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=41638.456738
++ echo '1662893660;1662894561;10;default;xfs;5000;ro;41638.456738;900.697752;3344'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/10/xfs/5000/run-rw-1
+++ date +%s
++ t1=1662894621
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/10/xfs/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662894621.664344
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41ADC0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/10/xfs/5000/run-rw-1/pgbench_log.tgz pgbench_log.30667 pgbench_log.30667.1 pgbench_log.30667.2 pgbench_log.30667.3
++ rm -f pgbench_log.30667 pgbench_log.30667.1 pgbench_log.30667.2 pgbench_log.30667.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662894621.664344'
++ d=3600.422686
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41ADC0'\'')'
++ w=137836915832
+++ date +%s
++ t2=1662898222
+++ cat 20220911-mdraid-large/10/xfs/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=4502.108167
++ echo '1662894621;1662898222;10;default;xfs;5000;rw;4502.108167;3600.422686;137836915832'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68973887488
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=80213431099
++ echo 'after;68973887488;11232100352;80213431099'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/10/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/10/ext4
++ '[' -d 20220911-mdraid-large/10/ext4 ']'
++ mkdir -p 20220911-mdraid-large/10/ext4
++ CSV='10;default;ext4'
++ echo '===== default 10 ext4 ====='
+===== default 10 ext4 =====
++ l=10
++ '[' 10 == 0 ']'
++ '[' 10 == 1 ']'
++ '[' 10 == 10 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=10 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to n2
+mdadm: layout defaults to n2
+mdadm: size set to 97609728K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=48
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=48 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Discarding device blocks:        0/73207296 7340032/7320729616252928/7320729625690112/7320729636175872/7320729646137344/7320729654001664/7320729661865984/7320729670778880/73207296                 done                            
+Creating filesystem with 73207296 4k blocks and 18309120 inodes
+Filesystem UUID: ae80db16-ab81-4967-b18e-6f7a30e52c2f
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616
+
+Allocating group tables:    0/2235         done                            
+Writing inode tables:    0/2235         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/2235         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/10/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/10/ext4/5000
+++ date +%s
++ t1=1662899756
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662899756.144544
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662899756.144544'
++ d=982.838026
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400496056
+++ date +%s
++ t2=1662900738
++ echo '1662899756;1662900738;10;default;ext4;5000;init;982.838026;64400496056'
+++ date +%s
++ t1=1662900738
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662900738.991968
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/19A660
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662900738.991968'
++ d=0.113948
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/19A660'\'')'
++ w=2628000
+++ date +%s
++ t2=1662900739
++ echo '1662900738;1662900739;10;default;ext4;5000;vacuum;0.113948;2628000'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/10/ext4/5000/run-ro-1
+++ date +%s
++ t1=1662900739
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/10/ext4/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662900739.136992
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41C000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/10/ext4/5000/run-ro-1/pgbench_log.tgz pgbench_log.22114 pgbench_log.22114.1 pgbench_log.22114.2 pgbench_log.22114.3
++ rm -f pgbench_log.22114 pgbench_log.22114.1 pgbench_log.22114.2 pgbench_log.22114.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662900739.136992'
++ d=900.711862
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41C000'\'')'
++ w=688
+++ date +%s
++ t2=1662901639
+++ cat 20220911-mdraid-large/10/ext4/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=41899.130108
++ echo '1662900739;1662901639;10;default;ext4;5000;ro;41899.130108;900.711862;688'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/10/ext4/5000/run-rw-1
+++ date +%s
++ t1=1662901699
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/10/ext4/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662901699.918530
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41C360
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/10/ext4/5000/run-rw-1/pgbench_log.tgz pgbench_log.27651 pgbench_log.27651.1 pgbench_log.27651.2 pgbench_log.27651.3
++ rm -f pgbench_log.27651 pgbench_log.27651.1 pgbench_log.27651.2 pgbench_log.27651.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662901699.918530'
++ d=3600.417339
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41C360'\'')'
++ w=137705281232
+++ date +%s
++ t2=1662905300
+++ cat 20220911-mdraid-large/10/ext4/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=4490.729904
++ echo '1662901699;1662905300;10;default;ext4;5000;rw;4490.729904;3600.417339;137705281232'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68971307008
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=80210850619
++ echo 'after;68971307008;11232100352;80210850619'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/10/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for level in 0 10 5 6 1
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/5/xfs
++ '[' -d 20220911-mdraid-large/5/xfs ']'
++ mkdir -p 20220911-mdraid-large/5/xfs
++ CSV='5;default;xfs'
++ echo '===== default 5 xfs ====='
+===== default 5 xfs =====
++ l=5
++ '[' 5 == 0 ']'
++ '[' 5 == 1 ']'
++ '[' 5 == 10 ']'
++ '[' 5 == 5 ']'
++ d=5
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=5 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97609728K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=80
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=5 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=7625744 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=122011904, imaxpct=25
+         =                       sunit=16     swidth=80 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=59576, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/5/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/5/xfs/5000
+++ date +%s
++ t1=1662905929
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662905929.783241
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662905929.783241'
++ d=852.256178
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400489784
+++ date +%s
++ t2=1662906782
++ echo '1662905929;1662906782;5;default;xfs;5000;init;852.256178;64400489784'
+++ date +%s
++ t1=1662906782
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662906782.048122
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/198DE0
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662906782.048122'
++ d=0.119023
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/198DE0'\'')'
++ w=2626080
+++ date +%s
++ t2=1662906782
++ echo '1662906782;1662906782;5;default;xfs;5000;vacuum;0.119023;2626080'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/5/xfs/5000/run-ro-1
+++ date +%s
++ t1=1662906782
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/5/xfs/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662906782.206868
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/5/xfs/5000/run-ro-1/pgbench_log.tgz pgbench_log.18115 pgbench_log.18115.1 pgbench_log.18115.2 pgbench_log.18115.3
++ rm -f pgbench_log.18115 pgbench_log.18115.1 pgbench_log.18115.2 pgbench_log.18115.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662906782.206868'
++ d=900.692744
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=2608
+++ date +%s
++ t2=1662907682
+++ cat 20220911-mdraid-large/5/xfs/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=40401.179827
++ echo '1662906782;1662907682;5;default;xfs;5000;ro;40401.179827;900.692744;2608'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/5/xfs/5000/run-rw-1
+++ date +%s
++ t1=1662907742
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/5/xfs/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662907742.967495
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41AAE0
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/5/xfs/5000/run-rw-1/pgbench_log.tgz pgbench_log.23699 pgbench_log.23699.1 pgbench_log.23699.2 pgbench_log.23699.3
++ rm -f pgbench_log.23699 pgbench_log.23699.1 pgbench_log.23699.2 pgbench_log.23699.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662907742.967495'
++ d=3600.356705
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41AAE0'\'')'
++ w=117250841504
+++ date +%s
++ t2=1662911343
+++ cat 20220911-mdraid-large/5/xfs/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=3487.468145
++ echo '1662907742;1662911343;5;default;xfs;5000;rw;3487.468145;3600.356705;117250841504'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68695638016
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79935189819
++ echo 'after;68695638016;11232100352;79935189819'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/5/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/5/ext4
++ '[' -d 20220911-mdraid-large/5/ext4 ']'
++ mkdir -p 20220911-mdraid-large/5/ext4
++ CSV='5;default;ext4'
++ echo '===== default 5 ext4 ====='
+===== default 5 ext4 =====
++ l=5
++ '[' 5 == 0 ']'
++ '[' 5 == 1 ']'
++ '[' 5 == 10 ']'
++ '[' 5 == 5 ']'
++ d=5
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=5 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97609728K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=80
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=80 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Creating filesystem with 122012160 4k blocks and 30507008 inodes
+Filesystem UUID: bbe8e363-8bb5-4ec3-96e3-1603540af74f
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968, 
+	102400000
+
+Allocating group tables:    0/3724         done                            
+Writing inode tables:    0/3724         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/3724         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/5/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/5/ext4/5000
+++ date +%s
++ t1=1662911918
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662911918.529939
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662911918.529939'
++ d=981.184616
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400490712
+++ date +%s
++ t2=1662912899
++ echo '1662911918;1662912899;5;default;ext4;5000;init;981.184616;64400490712'
+++ date +%s
++ t1=1662912899
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662912899.727934
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/199180
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662912899.727934'
++ d=0.128745
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/199180'\'')'
++ w=2625152
+++ date +%s
++ t2=1662912899
++ echo '1662912899;1662912899;5;default;ext4;5000;vacuum;0.128745;2625152'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/5/ext4/5000/run-ro-1
+++ date +%s
++ t1=1662912899
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/5/ext4/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662912899.896242
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/5/ext4/5000/run-ro-1/pgbench_log.tgz pgbench_log.14260 pgbench_log.14260.1 pgbench_log.14260.2 pgbench_log.14260.3
++ rm -f pgbench_log.14260 pgbench_log.14260.1 pgbench_log.14260.2 pgbench_log.14260.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662912899.896242'
++ d=900.681923
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=3536
+++ date +%s
++ t2=1662913800
+++ cat 20220911-mdraid-large/5/ext4/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=39679.606604
++ echo '1662912899;1662913800;5;default;ext4;5000;ro;39679.606604;900.681923;3536'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/5/ext4/5000/run-rw-1
+++ date +%s
++ t1=1662913860
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/5/ext4/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662913860.656510
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41AE80
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/5/ext4/5000/run-rw-1/pgbench_log.tgz pgbench_log.19784 pgbench_log.19784.1 pgbench_log.19784.2 pgbench_log.19784.3
++ rm -f pgbench_log.19784 pgbench_log.19784.1 pgbench_log.19784.2 pgbench_log.19784.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662913860.656510'
++ d=3600.338663
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41AE80'\'')'
++ w=113854091648
+++ date +%s
++ t2=1662917461
+++ cat 20220911-mdraid-large/5/ext4/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=3333.026083
++ echo '1662913860;1662917461;5;default;ext4;5000;rw;3333.026083;3600.338663;113854091648'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68649082880
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79888634683
++ echo 'after;68649082880;11232100352;79888634683'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/5/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for level in 0 10 5 6 1
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/6/xfs
++ '[' -d 20220911-mdraid-large/6/xfs ']'
++ mkdir -p 20220911-mdraid-large/6/xfs
++ CSV='6;default;xfs'
++ echo '===== default 6 xfs ====='
+===== default 6 xfs =====
++ l=6
++ '[' 6 == 0 ']'
++ '[' 6 == 1 ']'
++ '[' 6 == 10 ']'
++ '[' 6 == 5 ']'
++ '[' 6 == 6 ']'
++ d=4
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=6 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97609728K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=64
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=4 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=6100592 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=97609472, imaxpct=25
+         =                       sunit=16     swidth=64 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=47660, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/6/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/6/xfs/5000
+++ date +%s
++ t1=1662918145
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662918145.432860
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662918145.432860'
++ d=1019.105879
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400490984
+++ date +%s
++ t2=1662919164
++ echo '1662918145;1662919164;6;default;xfs;5000;init;1019.105879;64400490984'
+++ date +%s
++ t1=1662919164
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662919164.547456
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/199290
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662919164.547456'
++ d=0.124354
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/199290'\'')'
++ w=2624880
+++ date +%s
++ t2=1662919164
++ echo '1662919164;1662919164;6;default;xfs;5000;vacuum;0.124354;2624880'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/6/xfs/5000/run-ro-1
+++ date +%s
++ t1=1662919164
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ wc -l
+++ grep -v grep
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/6/xfs/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662919164.712277
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/6/xfs/5000/run-ro-1/pgbench_log.tgz pgbench_log.10361 pgbench_log.10361.1 pgbench_log.10361.2 pgbench_log.10361.3
++ rm -f pgbench_log.10361 pgbench_log.10361.1 pgbench_log.10361.2 pgbench_log.10361.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662919164.712277'
++ d=900.684762
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=3752
+++ date +%s
++ t2=1662920065
+++ cat 20220911-mdraid-large/6/xfs/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=39978.929290
++ echo '1662919164;1662920065;6;default;xfs;5000;ro;39978.929290;900.684762;3752'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/6/xfs/5000/run-rw-1
+++ date +%s
++ t1=1662920125
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/6/xfs/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662920125.465817
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41AF58
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/6/xfs/5000/run-rw-1/pgbench_log.tgz pgbench_log.15917 pgbench_log.15917.1 pgbench_log.15917.2 pgbench_log.15917.3
++ rm -f pgbench_log.15917 pgbench_log.15917.1 pgbench_log.15917.2 pgbench_log.15917.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662920125.465817'
++ d=3600.299836
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41AF58'\'')'
++ w=98301081744
+++ date +%s
++ t2=1662923725
+++ cat 20220911-mdraid-large/6/xfs/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=2682.910906
++ echo '1662920125;1662923725;6;default;xfs;5000;rw;2682.910906;3600.299836;98301081744'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68440981504
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79680525115
++ echo 'after;68440981504;11232100352;79680525115'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/6/xfs/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/6/ext4
++ '[' -d 20220911-mdraid-large/6/ext4 ']'
++ mkdir -p 20220911-mdraid-large/6/ext4
++ CSV='6;default;ext4'
++ echo '===== default 6 ext4 ====='
+===== default 6 ext4 =====
++ l=6
++ '[' 6 == 0 ']'
++ '[' 6 == 1 ']'
++ '[' 6 == 10 ']'
++ '[' 6 == 5 ']'
++ '[' 6 == 6 ']'
++ d=4
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=6 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: layout defaults to left-symmetric
+mdadm: layout defaults to left-symmetric
+mdadm: size set to 97609728K
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=64
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ wc -l
+++ grep finish /proc/mdstat
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' ext4 == ext4 ']'
++ sudo mkfs.ext4 -F -E stride=16,stripe_width=64 /dev/md0
+mke2fs 1.46.5 (30-Dec-2021)
+Creating filesystem with 97609728 4k blocks and 24403968 inodes
+Filesystem UUID: cb2a4f12-69d0-4864-9596-71a32947a5d3
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424, 20480000, 23887872, 71663616, 78675968
+
+Allocating group tables:    0/2979         done                            
+Writing inode tables:    0/2979         done                            
+Creating journal (262144 blocks): done
+Writing superblocks and filesystem accounting information:    0/2979         done
+
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/6/ext4/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/6/ext4/5000
+++ date +%s
++ t1=1662924286
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662924286.220881
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662924286.220881'
++ d=1233.806187
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''0/18810A8'\'')'
++ w=64400492320
+++ date +%s
++ t2=1662925520
++ echo '1662924286;1662925520;6;default;ext4;5000;init;1233.806187;64400492320'
+++ date +%s
++ t1=1662925520
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662925520.040015
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/1997C8
++ vacuumdb --freeze --min-xid-age=1 test
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662925520.040015'
++ d=0.115103
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/1997C8'\'')'
++ w=2623544
+++ date +%s
++ t2=1662925520
++ echo '1662925520;1662925520;6;default;ext4;5000;vacuum;0.115103;2623544'
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RO`
++ '[' 5000 == 50 ']'
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/6/ext4/5000/run-ro-1
+++ date +%s
++ t1=1662925520
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 900 20220911-mdraid-large/6/ext4/5000/run-ro-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662925520.186880
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41A000
++ pgbench -n -M prepared -S -j 4 -c 16 -T 900 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/6/ext4/5000/run-ro-1/pgbench_log.tgz pgbench_log.6333 pgbench_log.6333.1 pgbench_log.6333.2 pgbench_log.6333.3
++ rm -f pgbench_log.6333 pgbench_log.6333.1 pgbench_log.6333.2 pgbench_log.6333.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662925520.186880'
++ d=900.677853
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41A000'\'')'
++ w=5088
+++ date +%s
++ t2=1662926420
+++ cat 20220911-mdraid-large/6/ext4/5000/run-ro-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=39565.678761
++ echo '1662925520;1662926420;6;default;ext4;5000;ro;39565.678761;900.677853;5088'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'after;67168600064;11232100352;78408135483'
++ sleep 60
++ psql test -c checkpoint
+++ seq -s ' ' 1 1
++ for r in `seq -s ' ' 1 $RUNS_RW`
++ rm -f 'pgbench_log.*'
++ mkdir 20220911-mdraid-large/6/ext4/5000/run-rw-1
+++ date +%s
++ t1=1662926480
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=67168600064
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=78408135483
++ echo 'before;67168600064;11232100352;78408135483'
+++ ps ax
+++ grep collect-stats
+++ grep -v grep
+++ wc -l
++ c=0
++ '[' 0 '!=' 0 ']'
++ ./collect-stats.sh 3600 20220911-mdraid-large/6/ext4/5000/run-rw-1
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662926480.941990
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=F/41B490
++ pgbench -n -M prepared -N -j 4 -c 16 -T 3600 -l --sampling-rate=0.01 test
++ tar -czf 20220911-mdraid-large/6/ext4/5000/run-rw-1/pgbench_log.tgz pgbench_log.11863 pgbench_log.11863.1 pgbench_log.11863.2 pgbench_log.11863.3
++ rm -f pgbench_log.11863 pgbench_log.11863.1 pgbench_log.11863.2 pgbench_log.11863.3
+++ psql -t -A test -c 'select extract(epoch from now()) - 1662926480.941990'
++ d=3600.293746
+++ psql -t -A test -c 'select pg_wal_lsn_diff(pg_current_wal_lsn(), '\''F/41B490'\'')'
++ w=93327052712
+++ date +%s
++ t2=1662930081
+++ cat 20220911-mdraid-large/6/ext4/5000/run-rw-1/pgbench.log
+++ grep 'without initial'
+++ awk '{print $3}'
++ tps=2492.253378
++ echo '1662926480;1662930081;6;default;ext4;5000;rw;2492.253378;3600.293746;93327052712'
+++ psql -t -A test -c 'select sum(pg_table_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ st=68375265280
+++ psql -t -A test -c 'select sum(pg_indexes_size(oid)) from pg_class where relnamespace = 2200 and relkind = '\''r'\'''
++ si=11232100352
+++ psql -t -A test -c 'select pg_database_size('\''test'\'')'
++ sd=79614808891
++ echo 'after;68375265280;11232100352;79614808891'
++ sleep 60
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/6/ext4/pg.log -w -m immediate -t 3600 stop
+waiting for server to shut down.... done
+server stopped
++ sudo umount /mnt/data
++ sudo mdadm --stop /dev/md0
+mdadm: stopped /dev/md0
++ for level in 0 10 5 6 1
++ pgconf=default
++ for fs in xfs ext4
++ TESTDIR=20220911-mdraid-large/1/xfs
++ '[' -d 20220911-mdraid-large/1/xfs ']'
++ mkdir -p 20220911-mdraid-large/1/xfs
++ CSV='1;default;xfs'
++ echo '===== default 1 xfs ====='
+===== default 1 xfs =====
++ l=1
++ '[' 1 == 0 ']'
++ '[' 1 == 1 ']'
++ d=3
++ sudo mdadm --zero-superblock --force /dev/sda1
++ sudo mdadm --zero-superblock --force /dev/sdb1
++ sudo mdadm --zero-superblock --force /dev/sdc1
++ sudo mdadm --zero-superblock --force /dev/sdd1
++ sudo mdadm --zero-superblock --force /dev/sde1
++ sudo mdadm --zero-superblock --force /dev/sdf1
++ sudo mdadm --create -R --verbose /dev/md0 --chunk=64K --level=1 --raid-devices=6 /dev/sda1 /dev/sdb1 /dev/sdc1 /dev/sdd1 /dev/sde1 /dev/sdf1
+mdadm: chunk size ignored for this level
+mdadm: Note: this array has metadata at the start and
+    may not be suitable as a boot device.  If you plan to
+    store '/boot' on this device please ensure that
+    your boot-loader understands md/v1.x metadata, or use
+    --metadata=0.90
+mdadm: size set to 97609728K
+mdadm: creation continuing despite oddities due to --run
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
++ stride=16
++ stripe_width=48
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=1
++ '[' 1 == 0 ']'
++ sleep 5
++ /bin/true
+++ grep finish /proc/mdstat
+++ wc -l
++ c=0
++ '[' 0 == 0 ']'
++ break
++ '[' xfs == ext4 ']'
++ sudo mkfs.xfs -f -d su=64k,sw=3 /dev/md0
+meta-data=/dev/md0               isize=512    agcount=16, agsize=1525136 blks
+         =                       sectsz=4096  attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=0 inobtcount=0
+data     =                       bsize=4096   blocks=24402176, imaxpct=25
+         =                       sunit=16     swidth=48 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=11915, version=2
+         =                       sectsz=4096  sunit=1 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
++ sleep 5
++ sudo mount -o relatime /dev/md0 /mnt/data
++ sudo chown postgres:postgres /mnt/data
++ pg_ctl -D /mnt/data/pgdata init
++ cp postgresql-default.conf /mnt/data/pgdata/postgresql.conf
++ pg_ctl -D /mnt/data/pgdata -l 20220911-mdraid-large/1/xfs/pg.log -w start
+waiting for server to start.... done
+server started
++ ps ax
++ pg_config
++ psql postgres -c 'select * from pg_settings'
++ sudo mdadm --detail /dev/md0
++ cat /proc/mdstat
++ for scale in 5000
++ dropdb --if-exists test
+NOTICE:  database "test" does not exist, skipping
++ createdb test
++ mkdir 20220911-mdraid-large/1/xfs/5000
+++ date +%s
++ t1=1662930923
+++ psql -t -A test -c 'select extract(epoch from now())'
++ s=1662930923.858334
+++ psql -t -A test -c 'select pg_current_wal_lsn()'
++ w=0/18810A8
++ pgbench -i -s 5000 test

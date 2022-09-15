@@ -1,0 +1,30 @@
+2022-09-11 23:15:23.693 CEST [2346] LOG:  starting PostgreSQL 16devel on x86_64-pc-linux-gnu, compiled by gcc (Gentoo 9.2.0-r2 p3) 9.2.0, 64-bit
+2022-09-11 23:15:23.694 CEST [2346] LOG:  listening on IPv6 address "::1", port 5432
+2022-09-11 23:15:23.694 CEST [2346] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2022-09-11 23:15:23.696 CEST [2346] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2022-09-11 23:15:23.698 CEST [2349] LOG:  database system was shut down at 2022-09-11 23:15:23 CEST
+2022-09-11 23:15:23.700 CEST [2346] LOG:  database system is ready to accept connections
+2022-09-11 23:17:04.003 CEST [2389] LOG:  automatic analyze of table "template1.pg_catalog.pg_type"
+	avg read rate: 0.169 MB/s, avg write rate: 0.406 MB/s
+	buffer usage: 1076 hits, 5 misses, 12 dirtied
+	system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.23 s
+2022-09-11 23:29:18.969 CEST [2347] LOG:  checkpoint starting: wal
+2022-09-11 23:33:29.893 CEST [2377] ERROR:  could not extend file "base/16384/16397.51": No space left on device
+2022-09-11 23:33:29.893 CEST [2377] HINT:  Check free disk space.
+2022-09-11 23:33:29.893 CEST [2377] CONTEXT:  COPY pgbench_accounts, line 408495000
+2022-09-11 23:33:29.893 CEST [2377] STATEMENT:  copy pgbench_accounts from stdin with (freeze on)
+2022-09-11 23:33:29.894 CEST [2350] PANIC:  could not create file "pg_wal/xlogtemp.2350": No space left on device
+2022-09-11 23:33:29.895 CEST [2346] LOG:  WAL writer process (PID 2350) was terminated by signal 6: Aborted
+2022-09-11 23:33:29.895 CEST [2346] LOG:  terminating any other active server processes
+2022-09-11 23:33:29.897 CEST [2346] LOG:  all server processes terminated; reinitializing
+2022-09-11 23:33:29.925 CEST [2521] LOG:  database system was interrupted; last known up at 2022-09-11 23:15:23 CEST
+2022-09-11 23:33:30.586 CEST [2521] LOG:  database system was not properly shut down; automatic recovery in progress
+2022-09-11 23:33:30.592 CEST [2521] LOG:  redo starts at 0/14969E8
+2022-09-11 23:33:40.592 CEST [2521] LOG:  redo in progress, elapsed time: 10.00 s, current LSN: 0/4D46A390
+2022-09-11 23:33:45.563 CEST [2521] FATAL:  could not extend file "base/16384/16397_fsm": No space left on device
+2022-09-11 23:33:45.563 CEST [2521] HINT:  Check free disk space.
+2022-09-11 23:33:45.563 CEST [2521] CONTEXT:  WAL redo at 0/6390B8D8 for Heap2/MULTI_INSERT+INIT: 61 tuples flags 0x20; blkref #0: rel 1663/16384/16397, blk 248209
+2022-09-11 23:33:45.594 CEST [2346] LOG:  startup process (PID 2521) exited with exit code 1
+2022-09-11 23:33:45.594 CEST [2346] LOG:  terminating any other active server processes
+2022-09-11 23:33:45.599 CEST [2346] LOG:  shutting down due to startup process failure
+2022-09-11 23:33:45.696 CEST [2346] LOG:  database system is shut down
